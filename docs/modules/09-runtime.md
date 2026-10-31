@@ -53,3 +53,5 @@ VISION_ENABLED=true默认启用实际原版引擎；health.vision_configured=tru
 apps/web/public/vision/ 是可重建的模型/WASM下载目录，不加入Git；首次克隆后按README运行 npm ci 与 npm run assets:vision，脚本根据 integrations/vision-assets.lock.json 验证并安装固定资源。已有本地资源保留原处，不因.gitignore删除。
 
 提交前核对 Git 暂存区清单和敏感值扫描；不输出密钥，不将真实学习记录、运行配置或临时数据库上传。仓库默认为用户个人账号下的私有仓库。
+
+个人私有仓库为 https://github.com/fft020205/ai-study ，默认分支 main。首次克隆按根 README 安装依赖和固定视觉资源；本机原目录仍可直接 npm run dev。后续正常 git add / git commit / git push 同步源码，忽略规则不会删除本地配置、学习数据或下载资源。

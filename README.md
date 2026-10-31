@@ -9,7 +9,8 @@
 需要 Node.js 22.12+（推荐 24 LTS）、Python 3.11–3.13。当前在 macOS / Python 3.12 验证。
 
 ```bash
-cd "/Users/fft/Desktop/AI study project"
+git clone https://github.com/fft020205/ai-study.git
+cd ai-study
 npm ci
 python3.12 -m venv .venv
 .venv/bin/python -m pip install -r services/api/requirements.lock.txt
