@@ -1,0 +1,24 @@
+node_modules/
+.next/
+.venv/
+.env
+data/
+__pycache__/
+.pytest_cache/
+*.tsbuildinfo
+.DS_Store
+*.log
+qa/
+
+# Private configuration, local backups and credentials
+.env.*
+!.env.example
+*.db
+*.sqlite
+*.sqlite3
+*.db-*
+*.pem
+*.key
+
+# Reproducible model/WASM downloads (scripts/vision-assets.mjs + lock file)
+apps/web/public/vision/

@@ -1,0 +1,251 @@
+const assetPathPrefix = "https://www.figma.com/api/mcp/asset/1df4a945-653e-4038-a1f5-1dca24856fbb";
+const imgTrack = `${assetPathPrefix}/51a14.svg`;
+const imgTrack1 = `${assetPathPrefix}/90455.svg`;
+const imgIconCameraOff = `${assetPathPrefix}/f2bb3.svg`;
+const imgIconMinimize = `${assetPathPrefix}/7b5e2.svg`;
+const imgVideoMirroredSelfPreview = `${assetPathPrefix}/92217.png`;
+const imgIconBook = `${assetPathPrefix}/7cf21.svg`;
+const imgIconSpark = `${assetPathPrefix}/c365f.svg`;
+const imgLeadingIcon = `${assetPathPrefix}/b94dc.svg`;
+
+type SwitchProps = {
+  className?: string;
+  state?: boolean;
+};
+
+function Switch({ className, state = false }: SwitchProps) {
+  const isState = state;
+  return (
+    <button className={className || "content-stretch flex gap-[var(--learning-space-0,0px)] h-[44px] items-center justify-center p-[var(--learning-space-0,0px)] relative w-[48px]"} id={isState ? "node-8_147" : "node-8_144"}>
+      <div className="h-[26px] relative shrink-0 w-[44px]" id={isState ? "node-8_148" : "node-8_145"} data-name="Track">
+        <img alt="" className="absolute block inset-0 max-w-none size-full" src={isState ? imgTrack1 : imgTrack} />
+      </div>
+    </button>
+  );
+}
+
+function IconCameraOff({ className }: { className?: string }) {
+  return (
+    <div className={className || "relative size-[24px]"} data-node-id="8:35" data-name="Icon/CameraOff">
+      <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgIconCameraOff} />
+    </div>
+  );
+}
+
+function IconMinimize({ className }: { className?: string }) {
+  return (
+    <div className={className || "relative size-[24px]"} data-node-id="8:28" data-name="Icon/Minimize">
+      <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgIconMinimize} />
+    </div>
+  );
+}
+
+type CameraProps = {
+  className?: string;
+  device?: "Desktop";
+  state?: "Live";
+};
+
+function Camera({ className, device = "Desktop", state = "Live" }: CameraProps) {
+  return (
+    <div className={className || "bg-[var(--learning-color-bg,white)] border-[length:var(--learning-border-width,1px)] border-[var(--learning-color-border,#e1e5e2)] border-solid content-stretch flex flex-col gap-[var(--learning-space-0,0px)] h-[190px] items-center overflow-clip p-[var(--learning-space-0,0px)] relative rounded-[var(--learning-radius-16,16px)] shadow-[0px_8px_28px_0px_rgba(13,26,18,0.1)] w-[224px]"} data-node-id="8:202">
+      <div className="content-stretch flex flex-[1_0_0] flex-col gap-[var(--learning-space-0,0px)] items-start min-h-px overflow-clip p-[var(--learning-space-0,0px)] relative w-full" data-node-id="8:203" data-name="Video / mirrored self-preview">
+        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgVideoMirroredSelfPreview} />
+        <div className="absolute bg-[var(--learning-color-support,#eff6f1)] content-stretch flex gap-[var(--learning-space-4,4px)] h-[24px] items-start left-[8px] p-[var(--learning-space-4,4px)] rounded-[var(--learning-radius-8,8px)] top-[8px] w-[50px]" data-node-id="8:204" data-name="Live indicator">
+          <p className="[word-break:break-word] font-['Noto_Sans_SC:Regular'] font-normal leading-[20px] relative shrink-0 text-[12px] text-[color:var(--learning-color-accent,#2e6653)] whitespace-nowrap" data-node-id="8:205">
+            ● 实时
+          </p>
+        </div>
+      </div>
+      <div className="content-stretch flex gap-[var(--learning-space-0,0px)] h-[44px] items-center pl-[var(--learning-space-12,12px)] pr-[var(--learning-space-0,0px)] py-[var(--learning-space-0,0px)] relative shrink-0 w-full" data-node-id="8:206" data-name="Self-view controls">
+        <div className="[word-break:break-word] flex flex-[1_0_0] flex-col font-['Noto_Sans_SC:Regular'] font-normal justify-center leading-[0] min-w-px relative text-[12px] text-[color:var(--learning-color-muted,#646b66)]" data-node-id="8:207">
+          <p className="leading-[20px]">你</p>
+        </div>
+        <button className="block cursor-pointer relative shrink-0 size-[44px]" data-node-id="8:208" data-name="收起预览">
+          <IconMinimize className="-translate-x-1/2 -translate-y-1/2 absolute left-1/2 size-[20px] top-1/2" />
+        </button>
+        <button className="block cursor-pointer relative shrink-0 size-[44px]" data-node-id="8:211" data-name="关闭摄像头">
+          <IconCameraOff className="-translate-x-1/2 -translate-y-1/2 absolute left-1/2 size-[20px] top-1/2" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function IconBook({ className }: { className?: string }) {
+  return (
+    <div className={className || "relative size-[24px]"} data-node-id="8:70" data-name="Icon/Book">
+      <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgIconBook} />
+    </div>
+  );
+}
+
+type NavigationProps = {
+  className?: string;
+  active?: boolean;
+  label?: string;
+};
+
+function Navigation({ className, active = false, label = "编程变量" }: NavigationProps) {
+  const isActive = active;
+  return (
+    <div className={className || `content-stretch flex gap-[var(--learning-space-12,12px)] h-[44px] items-center p-[var(--learning-space-12,12px)] relative rounded-[var(--learning-radius-12,12px)] w-[204px] ${isActive ? "bg-[var(--learning-color-subtle,#f2f4f2)]" : ""}`} id={isActive ? "node-8_518" : "node-8_514"}>
+      <IconBook className="relative shrink-0 size-[20px]" />
+      <p className="[word-break:break-word] font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[14px] text-[color:var(--learning-color-text,#202321)] whitespace-nowrap" data-node-id="8:517">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+function IconSpark({ className }: { className?: string }) {
+  return (
+    <div className={className || "relative size-[24px]"} data-node-id="8:4" data-name="Icon/Spark">
+      <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgIconSpark} />
+    </div>
+  );
+}
+
+export default function Desktop07() {
+  return (
+    <div className="bg-[var(--learning-color-bg,white)] content-stretch flex gap-[var(--learning-space-0,0px)] items-start p-[var(--learning-space-0,0px)] relative size-full" data-node-id="10:815" data-name="Desktop / 07 学习设置与摄像头">
+      <div className="bg-[var(--learning-color-sidebar,#f8f9f8)] content-stretch flex flex-col gap-[var(--learning-space-20,20px)] h-[960px] items-start p-[var(--learning-space-20,20px)] relative shrink-0 w-[240px]" data-node-id="10:816" data-name="Sidebar / navigation">
+        <div className="content-stretch flex gap-[var(--learning-space-8,8px)] h-[48px] items-center p-[var(--learning-space-0,0px)] relative shrink-0 w-[200px]" data-node-id="10:817" data-name="Brand">
+          <IconSpark className="relative shrink-0 size-[28px]" />
+          <p className="[word-break:break-word] font-['Noto_Sans_SC:Medium'] font-medium leading-[28px] relative shrink-0 text-[16px] text-[color:var(--learning-color-text,#202321)] whitespace-nowrap" data-node-id="10:820">
+            学习助手
+          </p>
+        </div>
+        <div className="bg-[var(--learning-color-bg,white)] border-[length:var(--learning-border-width,1px)] border-[var(--learning-color-border,#e1e5e2)] border-solid content-stretch flex gap-[var(--learning-space-8,8px)] h-[44px] items-center justify-center p-[var(--learning-space-0,0px)] relative rounded-[var(--learning-radius-999,999px)] shrink-0 w-[200px]" data-node-id="10:821" data-name="开始新的学习">
+          <div className="relative shrink-0 size-[18px]" data-node-id="I10:821;8:113" data-name="Leading icon">
+            <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgLeadingIcon} />
+          </div>
+          <p className="[word-break:break-word] font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[14px] text-[color:var(--learning-color-text,#202321)] whitespace-nowrap" data-node-id="I10:821;8:115">
+            开始新的学习
+          </p>
+        </div>
+        <p className="[word-break:break-word] font-['Noto_Sans_SC:Regular'] font-normal leading-[20px] relative shrink-0 text-[12px] text-[color:var(--learning-color-muted,#646b66)] whitespace-nowrap" data-node-id="10:826">
+          历史记录
+        </p>
+        <Navigation active className="bg-[var(--learning-color-subtle,#f2f4f2)] content-stretch flex gap-[var(--learning-space-12,12px)] h-[44px] items-center p-[var(--learning-space-12,12px)] relative rounded-[var(--learning-radius-12,12px)] shrink-0 w-[200px]" />
+        <Navigation className="content-stretch flex gap-[var(--learning-space-12,12px)] h-[44px] items-center p-[var(--learning-space-12,12px)] relative rounded-[var(--learning-radius-12,12px)] shrink-0 w-[200px]" label="平均数" />
+        <Navigation className="content-stretch flex gap-[var(--learning-space-12,12px)] h-[44px] items-center p-[var(--learning-space-12,12px)] relative rounded-[var(--learning-radius-12,12px)] shrink-0 w-[200px]" label="相关与因果" />
+        <div className="flex-[1_0_0] min-h-px relative w-full" data-node-id="10:839" data-name="Flexible space" />
+        <div className="[word-break:break-word] content-stretch flex flex-col gap-[var(--learning-space-4,4px)] items-start p-[var(--learning-space-0,0px)] relative shrink-0 w-[200px] whitespace-nowrap" data-node-id="10:840" data-name="Session status">
+          <p className="font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[14px] text-[color:var(--learning-color-text,#202321)]" data-node-id="10:841">
+            这次学习，由你掌控
+          </p>
+          <div className="content-stretch flex font-['Noto_Sans_SC:Regular'] font-normal gap-[var(--learning-space-8,8px)] h-[28px] items-center leading-[20px] p-[var(--learning-space-0,0px)] relative shrink-0 text-[12px] w-[200px]" data-node-id="10:842" data-name="摄像头已开启">
+            <p className="relative shrink-0 text-[color:var(--learning-color-accent,#2e6653)]" data-node-id="10:843">
+              ●
+            </p>
+            <p className="relative shrink-0 text-[color:var(--learning-color-muted,#646b66)]" data-node-id="10:844">
+              摄像头已开启
+            </p>
+          </div>
+          <div className="content-stretch flex font-['Noto_Sans_SC:Regular'] font-normal gap-[var(--learning-space-8,8px)] h-[28px] items-center leading-[20px] p-[var(--learning-space-0,0px)] relative shrink-0 text-[12px] w-[200px]" data-node-id="10:848" data-name="主动支持已开启">
+            <p className="relative shrink-0 text-[color:var(--learning-color-accent,#2e6653)]" data-node-id="10:849">
+              ●
+            </p>
+            <p className="relative shrink-0 text-[color:var(--learning-color-muted,#646b66)]" data-node-id="10:850">
+              主动支持已开启
+            </p>
+          </div>
+        </div>
+        <div className="bg-[var(--learning-color-border,#e1e5e2)] h-px relative shrink-0 w-full" data-node-id="10:851" data-name="Divider" />
+        <div className="content-stretch flex gap-[var(--learning-space-0,0px)] h-[44px] items-center p-[var(--learning-space-0,0px)] relative shrink-0 w-[200px]" data-node-id="10:852" data-name="Privacy and data entry">
+          <p className="[word-break:break-word] font-['Noto_Sans_SC:Regular'] font-normal leading-[20px] relative shrink-0 text-[12px] text-[color:var(--learning-color-muted,#646b66)] whitespace-nowrap" data-node-id="10:855">
+            隐私与数据说明
+          </p>
+        </div>
+      </div>
+      <div className="bg-[var(--learning-color-bg,white)] content-stretch flex flex-[1_0_0] flex-col gap-[var(--learning-space-0,0px)] h-[960px] isolate items-start min-w-px p-[var(--learning-space-0,0px)] relative" data-node-id="10:856" data-name="Main / flexible workspace">
+        <div className="content-stretch flex gap-[var(--learning-space-12,12px)] h-[80px] items-center p-[var(--learning-space-24,24px)] relative shrink-0 w-full z-[2]" data-node-id="10:857" data-name="Header">
+          <p className="[word-break:break-word] font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[14px] text-[color:var(--learning-color-text,#202321)] whitespace-nowrap" data-node-id="10:858">
+            编程变量
+          </p>
+          <p className="[word-break:break-word] font-['Noto_Sans_SC:Regular'] font-normal leading-[24px] relative shrink-0 text-[14px] text-[color:var(--learning-color-muted,#646b66)] whitespace-pre" data-node-id="10:859">{`/  追踪旧值与交换`}</p>
+          <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="10:860" data-name="Header spacer" />
+          <button className="content-stretch cursor-pointer flex gap-[var(--learning-space-0,0px)] items-center justify-center p-[var(--learning-space-0,0px)] relative shrink-0 size-[44px]" data-node-id="33:1433" data-name="Avatar / account menu">
+            <div className="bg-[var(--learning-color-subtle,#f2f4f2)] border-[length:var(--learning-border-width,1px)] border-[var(--learning-color-border,#e1e5e2)] border-solid content-stretch flex gap-[var(--learning-space-0,0px)] items-center justify-center p-[var(--learning-space-0,0px)] relative rounded-[var(--learning-radius-999,999px)] shrink-0 size-[32px]" data-node-id="I33:1433;33:1270" data-name="Avatar / guest">
+              <p className="[word-break:break-word] font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[14px] text-[color:var(--learning-color-text,#202321)] text-left whitespace-nowrap" data-node-id="I33:1433;33:1271">
+                访
+              </p>
+            </div>
+          </button>
+        </div>
+        <div className="content-stretch flex flex-[1_0_0] flex-col gap-[var(--learning-space-24,24px)] items-center min-h-px p-[var(--learning-space-32,32px)] relative w-full z-[1]" data-node-id="10:876" data-name="Content viewport">
+          <div className="content-stretch flex flex-col gap-[var(--learning-space-20,20px)] items-start max-w-[704px] p-[var(--learning-space-0,0px)] relative shrink-0 w-full" data-node-id="10:877" data-name="Readable column / max 704">
+            <p className="[word-break:break-word] font-['Noto_Sans_SC:Regular'] font-normal leading-[20px] relative shrink-0 text-[12px] text-[color:var(--learning-color-accent,#2e6653)] w-[704px]" data-node-id="10:878">
+              随时可更改
+            </p>
+            <p className="[word-break:break-word] font-['Noto_Sans_SC:Medium'] font-medium leading-[52px] relative shrink-0 text-[36px] text-[color:var(--learning-color-text,#202321)] w-[704px]" data-node-id="10:879">
+              学习设置
+            </p>
+            <p className="[word-break:break-word] font-['Noto_Sans_SC:Regular'] font-normal leading-[24px] relative shrink-0 text-[14px] text-[color:var(--learning-color-muted,#646b66)] w-[704px]" data-node-id="10:880">
+              这里展示已主动开启的会话。关闭任一项，也可以继续学习。
+            </p>
+            <div className="content-stretch flex gap-[var(--learning-space-24,24px)] h-[190px] items-start p-[var(--learning-space-0,0px)] relative shrink-0 w-[704px]" data-node-id="10:881" data-name="Camera settings / self preview">
+              <Camera className="bg-[var(--learning-color-bg,white)] border-[length:var(--learning-border-width,1px)] border-[var(--learning-color-border,#e1e5e2)] border-solid content-stretch flex flex-col gap-[var(--learning-space-0,0px)] h-[190px] items-center overflow-clip p-[var(--learning-space-0,0px)] relative rounded-[var(--learning-radius-16,16px)] shadow-[0px_8px_28px_0px_rgba(13,26,18,0.1)] shrink-0 w-[224px]" />
+              <div className="[word-break:break-word] content-stretch flex flex-col gap-[var(--learning-space-8,8px)] items-start p-[var(--learning-space-0,0px)] relative shrink-0 w-[456px]" data-node-id="10:894" data-name="Camera explanation">
+                <p className="font-['Noto_Sans_SC:Medium'] font-medium leading-[28px] relative shrink-0 text-[16px] text-[color:var(--learning-color-text,#202321)] whitespace-nowrap" data-node-id="10:895">
+                  看到自己的状态
+                </p>
+                <div className="font-['Noto_Sans_SC:Regular'] font-normal leading-[0] relative shrink-0 text-[14px] text-[color:var(--learning-color-muted,#646b66)] w-[456px]" data-node-id="10:896">
+                  <p className="leading-[24px] mb-0">预览为镜像画面，只有你能看到。</p>
+                  <p className="leading-[24px]">收起预览仍保持摄像头开启；点击关闭会立即停止采集。</p>
+                </div>
+                <p className="font-['Noto_Sans_SC:Regular'] font-normal leading-[20px] relative shrink-0 text-[12px] text-[color:var(--learning-color-muted,#646b66)] w-[456px]" data-node-id="10:897">
+                  在页面后台、休息或暂停支持时停止采集。
+                </p>
+              </div>
+            </div>
+            <div className="content-stretch flex gap-[var(--learning-space-16,16px)] h-[68px] items-start p-[var(--learning-space-0,0px)] relative shrink-0 w-[704px]" data-node-id="10:898" data-name="主动支持">
+              <div className="[word-break:break-word] content-stretch flex flex-col gap-[var(--learning-space-4,4px)] items-start p-[var(--learning-space-0,0px)] relative shrink-0 text-[14px] w-[640px]" data-node-id="10:899" data-name="Setting text">
+                <p className="font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[color:var(--learning-color-text,#202321)] whitespace-nowrap" data-node-id="10:900">
+                  主动支持
+                </p>
+                <p className="font-['Noto_Sans_SC:Regular'] font-normal leading-[24px] relative shrink-0 text-[color:var(--learning-color-muted,#646b66)] w-[640px]" data-node-id="10:901">
+                  你仍然可以纠正、拒绝或暂停。
+                </p>
+              </div>
+              <Switch className="content-stretch cursor-pointer flex gap-[var(--learning-space-0,0px)] h-[44px] items-center justify-center p-[var(--learning-space-0,0px)] relative shrink-0 w-[48px]" state />
+            </div>
+            <div className="content-stretch flex gap-[var(--learning-space-16,16px)] h-[68px] items-start p-[var(--learning-space-0,0px)] relative shrink-0 w-[704px]" data-node-id="10:905" data-name="摄像头与自览">
+              <div className="[word-break:break-word] content-stretch flex flex-col gap-[var(--learning-space-4,4px)] items-start p-[var(--learning-space-0,0px)] relative shrink-0 text-[14px] w-[640px]" data-node-id="10:906" data-name="Setting text">
+                <p className="font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[color:var(--learning-color-text,#202321)] whitespace-nowrap" data-node-id="10:907">
+                  摄像头与自览
+                </p>
+                <p className="font-['Noto_Sans_SC:Regular'] font-normal leading-[24px] relative shrink-0 text-[color:var(--learning-color-muted,#646b66)] w-[640px]" data-node-id="10:908">
+                  当前开启 · 面部画面用于本次状态分析。
+                </p>
+              </div>
+              <Switch className="content-stretch cursor-pointer flex gap-[var(--learning-space-0,0px)] h-[44px] items-center justify-center p-[var(--learning-space-0,0px)] relative shrink-0 w-[48px]" state />
+            </div>
+            <div className="content-stretch flex gap-[var(--learning-space-16,16px)] h-[68px] items-start p-[var(--learning-space-0,0px)] relative shrink-0 w-[704px]" data-node-id="10:912" data-name="语音情绪分析">
+              <div className="[word-break:break-word] content-stretch flex flex-col gap-[var(--learning-space-4,4px)] items-start p-[var(--learning-space-0,0px)] relative shrink-0 text-[14px] w-[640px]" data-node-id="10:913" data-name="Setting text">
+                <p className="font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[color:var(--learning-color-text,#202321)] whitespace-nowrap" data-node-id="10:914">
+                  语音情绪分析
+                </p>
+                <p className="font-['Noto_Sans_SC:Regular'] font-normal leading-[24px] relative shrink-0 text-[color:var(--learning-color-muted,#646b66)] w-[640px]" data-node-id="10:915">
+                  仅在你主动录音时分析，转写单独授权。
+                </p>
+              </div>
+              <Switch className="content-stretch cursor-pointer flex gap-[var(--learning-space-0,0px)] h-[44px] items-center justify-center p-[var(--learning-space-0,0px)] relative shrink-0 w-[48px]" state />
+            </div>
+            <div className="content-stretch flex gap-[var(--learning-space-12,12px)] h-[44px] items-start p-[var(--learning-space-0,0px)] relative shrink-0 w-[704px]" data-node-id="10:919" data-name="Session controls">
+              <div className="bg-[var(--learning-color-text,#202321)] content-stretch flex gap-[var(--learning-space-8,8px)] h-[44px] items-center justify-center p-[var(--learning-space-0,0px)] relative rounded-[var(--learning-radius-999,999px)] shrink-0 w-[152px]" data-node-id="10:930" data-name="保存并继续">
+                <p className="[word-break:break-word] font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[14px] text-[color:var(--learning-color-on-accent,white)] whitespace-nowrap" data-node-id="I10:930;8:99">
+                  保存并继续
+                </p>
+              </div>
+            </div>
+            <p className="[word-break:break-word] font-['Noto_Sans_SC:Regular'] font-normal leading-[20px] relative shrink-0 text-[12px] text-[color:var(--learning-color-muted,#646b66)] w-[704px]" data-node-id="10:934">
+              暂停会停止状态识别与摄像头；文字问答和按需转写仍可使用。
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

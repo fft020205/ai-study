@@ -1,0 +1,210 @@
+const assetPathPrefix = "https://www.figma.com/api/mcp/asset/45e35051-668e-4734-9c0b-061c23d61bfc";
+const imgTrack = `${assetPathPrefix}/51a14.svg`;
+const imgIconBook = `${assetPathPrefix}/7cf21.svg`;
+const imgIconSpark = `${assetPathPrefix}/c365f.svg`;
+const imgLeadingIcon = `${assetPathPrefix}/b94dc.svg`;
+const imgIconSpark1 = `${assetPathPrefix}/5835f.svg`;
+const imgIconCamera = `${assetPathPrefix}/e6d7b.svg`;
+const imgIconMic = `${assetPathPrefix}/ca8be.svg`;
+
+type SwitchProps = {
+  className?: string;
+  state?: boolean;
+};
+
+function Switch({ className, state = false }: SwitchProps) {
+  return (
+    <button className={className || "content-stretch flex gap-[var(--learning-space-0,0px)] h-[44px] items-center justify-center p-[var(--learning-space-0,0px)] relative w-[48px]"} data-node-id="8:144">
+      <div className="h-[26px] relative shrink-0 w-[44px]" data-node-id="8:145" data-name="Track">
+        <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgTrack} />
+      </div>
+    </button>
+  );
+}
+
+function IconBook({ className }: { className?: string }) {
+  return (
+    <div className={className || "relative size-[24px]"} data-node-id="8:70" data-name="Icon/Book">
+      <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgIconBook} />
+    </div>
+  );
+}
+
+type NavigationProps = {
+  className?: string;
+  active?: "No";
+  label?: string;
+};
+
+function Navigation({ className, active = "No", label = "编程变量" }: NavigationProps) {
+  return (
+    <div className={className || "content-stretch flex gap-[var(--learning-space-12,12px)] h-[44px] items-center p-[var(--learning-space-12,12px)] relative rounded-[var(--learning-radius-12,12px)] w-[204px]"} data-node-id="8:514">
+      <IconBook className="relative shrink-0 size-[20px]" />
+      <p className="[word-break:break-word] font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[14px] text-[color:var(--learning-color-text,#202321)] whitespace-nowrap" data-node-id="8:517">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+function IconSpark({ className }: { className?: string }) {
+  return (
+    <div className={className || "relative size-[24px]"} data-node-id="8:4" data-name="Icon/Spark">
+      <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgIconSpark} />
+    </div>
+  );
+}
+
+export default function Desktop02() {
+  return (
+    <div className="bg-[var(--learning-color-bg,white)] content-stretch flex items-start relative size-full" data-node-id="5:64" data-name="Desktop / 02 开始前的设置">
+      <div className="bg-[var(--learning-color-sidebar,#f8f9f8)] content-stretch flex flex-col gap-[var(--learning-space-20,20px)] h-[960px] items-start p-[var(--learning-space-20,20px)] relative shrink-0 w-[240px]" data-node-id="10:246" data-name="Sidebar / navigation">
+        <div className="content-stretch flex gap-[var(--learning-space-8,8px)] h-[48px] items-center p-[var(--learning-space-0,0px)] relative shrink-0 w-[200px]" data-node-id="10:247" data-name="Brand">
+          <IconSpark className="relative shrink-0 size-[28px]" />
+          <p className="[word-break:break-word] font-['Noto_Sans_SC:Medium'] font-medium leading-[28px] relative shrink-0 text-[16px] text-[color:var(--learning-color-text,#202321)] whitespace-nowrap" data-node-id="10:250">
+            学习助手
+          </p>
+        </div>
+        <div className="bg-[var(--learning-color-bg,white)] border-[length:var(--learning-border-width,1px)] border-[var(--learning-color-border,#e1e5e2)] border-solid content-stretch flex gap-[var(--learning-space-8,8px)] h-[44px] items-center justify-center p-[var(--learning-space-0,0px)] relative rounded-[var(--learning-radius-999,999px)] shrink-0 w-[200px]" data-node-id="10:251" data-name="开始新的学习">
+          <div className="relative shrink-0 size-[18px]" data-node-id="I10:251;8:113" data-name="Leading icon">
+            <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgLeadingIcon} />
+          </div>
+          <p className="[word-break:break-word] font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[14px] text-[color:var(--learning-color-text,#202321)] whitespace-nowrap" data-node-id="I10:251;8:115">
+            开始新的学习
+          </p>
+        </div>
+        <p className="[word-break:break-word] font-['Noto_Sans_SC:Regular'] font-normal leading-[20px] relative shrink-0 text-[12px] text-[color:var(--learning-color-muted,#646b66)] whitespace-nowrap" data-node-id="10:256">
+          历史记录
+        </p>
+        <Navigation className="content-stretch flex gap-[var(--learning-space-12,12px)] h-[44px] items-center p-[var(--learning-space-12,12px)] relative rounded-[var(--learning-radius-12,12px)] shrink-0 w-[200px]" />
+        <Navigation className="content-stretch flex gap-[var(--learning-space-12,12px)] h-[44px] items-center p-[var(--learning-space-12,12px)] relative rounded-[var(--learning-radius-12,12px)] shrink-0 w-[200px]" label="平均数" />
+        <Navigation className="content-stretch flex gap-[var(--learning-space-12,12px)] h-[44px] items-center p-[var(--learning-space-12,12px)] relative rounded-[var(--learning-radius-12,12px)] shrink-0 w-[200px]" label="相关与因果" />
+        <div className="flex-[1_0_0] min-h-px relative w-full" data-node-id="10:269" data-name="Flexible space" />
+        <div className="[word-break:break-word] content-stretch flex flex-col gap-[var(--learning-space-4,4px)] items-start p-[var(--learning-space-0,0px)] relative shrink-0 w-[200px] whitespace-nowrap" data-node-id="10:270" data-name="Session status">
+          <p className="font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[14px] text-[color:var(--learning-color-text,#202321)]" data-node-id="10:271">
+            这次学习，由你掌控
+          </p>
+          <div className="content-stretch flex font-['Noto_Sans_SC:Regular'] font-normal gap-[var(--learning-space-8,8px)] h-[28px] items-center leading-[20px] p-[var(--learning-space-0,0px)] relative shrink-0 text-[12px] text-[color:var(--learning-color-muted,#646b66)] w-[200px]" data-node-id="10:272" data-name="摄像头未开启">
+            <p className="relative shrink-0" data-node-id="10:273">
+              ○
+            </p>
+            <p className="relative shrink-0" data-node-id="10:274">
+              摄像头未开启
+            </p>
+          </div>
+          <div className="content-stretch flex font-['Noto_Sans_SC:Regular'] font-normal gap-[var(--learning-space-8,8px)] h-[28px] items-center leading-[20px] p-[var(--learning-space-0,0px)] relative shrink-0 text-[12px] text-[color:var(--learning-color-muted,#646b66)] w-[200px]" data-node-id="10:278" data-name="主动支持未开启">
+            <p className="relative shrink-0" data-node-id="10:279">
+              ○
+            </p>
+            <p className="relative shrink-0" data-node-id="10:280">
+              主动支持未开启
+            </p>
+          </div>
+        </div>
+        <div className="bg-[var(--learning-color-border,#e1e5e2)] h-px relative shrink-0 w-full" data-node-id="10:281" data-name="Divider" />
+        <div className="content-stretch flex gap-[var(--learning-space-0,0px)] h-[44px] items-center p-[var(--learning-space-0,0px)] relative shrink-0 w-[200px]" data-node-id="10:282" data-name="Privacy and data entry">
+          <p className="[word-break:break-word] font-['Noto_Sans_SC:Regular'] font-normal leading-[20px] relative shrink-0 text-[12px] text-[color:var(--learning-color-muted,#646b66)] whitespace-nowrap" data-node-id="10:285">
+            隐私与数据说明
+          </p>
+        </div>
+      </div>
+      <div className="bg-[var(--learning-color-bg,white)] content-stretch flex flex-[1_0_0] flex-col gap-[var(--learning-space-0,0px)] h-[960px] isolate items-start min-w-px p-[var(--learning-space-0,0px)] relative" data-node-id="10:286" data-name="Main / flexible workspace">
+        <div className="content-stretch flex gap-[var(--learning-space-12,12px)] h-[80px] items-center p-[var(--learning-space-24,24px)] relative shrink-0 w-full z-[2]" data-node-id="10:287" data-name="Header">
+          <p className="[word-break:break-word] font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[14px] text-[color:var(--learning-color-text,#202321)] whitespace-nowrap" data-node-id="10:288">
+            学习助手
+          </p>
+          <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="10:289" data-name="Header spacer" />
+          <button className="content-stretch cursor-pointer flex gap-[var(--learning-space-0,0px)] items-center justify-center p-[var(--learning-space-0,0px)] relative shrink-0 size-[44px]" data-node-id="33:1335" data-name="Avatar / account menu">
+            <div className="bg-[var(--learning-color-subtle,#f2f4f2)] border-[length:var(--learning-border-width,1px)] border-[var(--learning-color-border,#e1e5e2)] border-solid content-stretch flex gap-[var(--learning-space-0,0px)] items-center justify-center p-[var(--learning-space-0,0px)] relative rounded-[var(--learning-radius-999,999px)] shrink-0 size-[32px]" data-node-id="I33:1335;33:1270" data-name="Avatar / guest">
+              <p className="[word-break:break-word] font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[14px] text-[color:var(--learning-color-text,#202321)] text-left whitespace-nowrap" data-node-id="I33:1335;33:1271">
+                访
+              </p>
+            </div>
+          </button>
+        </div>
+        <div className="content-stretch flex flex-[1_0_0] flex-col gap-[var(--learning-space-24,24px)] items-center min-h-px p-[var(--learning-space-32,32px)] relative w-full z-[1]" data-node-id="10:291" data-name="Content viewport">
+          <div className="content-stretch flex flex-col gap-[var(--learning-space-20,20px)] items-start max-w-[704px] p-[var(--learning-space-0,0px)] relative shrink-0 w-full" data-node-id="10:292" data-name="Readable column / max 704">
+            <p className="[word-break:break-word] font-['Noto_Sans_SC:Regular'] font-normal leading-[20px] relative shrink-0 text-[12px] text-[color:var(--learning-color-accent,#2e6653)] w-[704px]" data-node-id="10:293">
+              开始前 · 约 1 分钟
+            </p>
+            <p className="[word-break:break-word] font-['Noto_Sans_SC:Medium'] font-medium leading-[52px] relative shrink-0 text-[36px] text-[color:var(--learning-color-text,#202321)] w-[704px]" data-node-id="10:294">
+              选择你舒服的学习方式
+            </p>
+            <p className="[word-break:break-word] font-['Noto_Sans_SC:Regular'] font-normal leading-[24px] relative shrink-0 text-[14px] text-[color:var(--learning-color-muted,#646b66)] w-[704px]" data-node-id="10:295">
+              已选：编程变量 · 约 8–10 分钟。首次均为关闭，可随时更改。
+            </p>
+            <div className="bg-[var(--learning-color-bg,white)] border-[length:var(--learning-border-width,1px)] border-[var(--learning-color-border,#e1e5e2)] border-solid content-stretch flex flex-col gap-[var(--learning-space-12,12px)] items-start p-[var(--learning-space-24,24px)] relative rounded-[var(--learning-radius-20,20px)] shrink-0 w-[704px]" data-node-id="10:296" data-name="Independent permissions">
+              <div className="content-stretch flex gap-[var(--learning-space-16,16px)] h-[88px] items-center p-[var(--learning-space-0,0px)] relative shrink-0 w-[656px]" data-node-id="10:297" data-name="主动支持">
+                <div className="relative shrink-0 size-[24px]" data-node-id="10:298" data-name="icon/Spark">
+                  <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgIconSpark1} />
+                </div>
+                <div className="[word-break:break-word] content-stretch flex flex-col gap-[var(--learning-space-4,4px)] items-start p-[var(--learning-space-0,0px)] relative shrink-0 text-[14px] w-[552px]" data-node-id="10:300" data-name="Permission text">
+                  <p className="font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[color:var(--learning-color-text,#202321)] whitespace-nowrap" data-node-id="10:301">
+                    主动支持
+                  </p>
+                  <p className="font-['Noto_Sans_SC:Regular'] font-normal leading-[24px] relative shrink-0 text-[color:var(--learning-color-muted,#646b66)] w-[552px]" data-node-id="10:302">
+                    在你可能卡住时，先确认，再给一点帮助。
+                  </p>
+                </div>
+                <Switch className="content-stretch cursor-pointer flex gap-[var(--learning-space-0,0px)] h-[44px] items-center justify-center p-[var(--learning-space-0,0px)] relative shrink-0 w-[48px]" />
+              </div>
+              <div className="bg-[var(--learning-color-border,#e1e5e2)] h-px relative shrink-0 w-full" data-node-id="10:306" data-name="Divider" />
+              <div className="content-stretch flex gap-[var(--learning-space-16,16px)] h-[88px] items-center p-[var(--learning-space-0,0px)] relative shrink-0 w-[656px]" data-node-id="10:307" data-name="摄像头与自览">
+                <div className="relative shrink-0 size-[24px]" data-node-id="10:308" data-name="icon/Camera">
+                  <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgIconCamera} />
+                </div>
+                <div className="[word-break:break-word] content-stretch flex flex-col gap-[var(--learning-space-4,4px)] items-start p-[var(--learning-space-0,0px)] relative shrink-0 text-[14px] w-[552px]" data-node-id="10:311" data-name="Permission text">
+                  <p className="font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[color:var(--learning-color-text,#202321)] whitespace-nowrap" data-node-id="10:312">
+                    摄像头与自览
+                  </p>
+                  <p className="font-['Noto_Sans_SC:Regular'] font-normal leading-[24px] relative shrink-0 text-[color:var(--learning-color-muted,#646b66)] w-[552px]" data-node-id="10:313">
+                    开启后显示自己的画面，并用于当前学习状态分析。
+                  </p>
+                </div>
+                <Switch className="content-stretch cursor-pointer flex gap-[var(--learning-space-0,0px)] h-[44px] items-center justify-center p-[var(--learning-space-0,0px)] relative shrink-0 w-[48px]" />
+              </div>
+              <div className="bg-[var(--learning-color-border,#e1e5e2)] h-px relative shrink-0 w-full" data-node-id="10:317" data-name="Divider" />
+              <div className="content-stretch flex gap-[var(--learning-space-16,16px)] h-[88px] items-center p-[var(--learning-space-0,0px)] relative shrink-0 w-[656px]" data-node-id="10:318" data-name="语音情绪分析">
+                <div className="relative shrink-0 size-[24px]" data-node-id="10:319" data-name="icon/Mic">
+                  <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgIconMic} />
+                </div>
+                <div className="[word-break:break-word] content-stretch flex flex-col gap-[var(--learning-space-4,4px)] items-start p-[var(--learning-space-0,0px)] relative shrink-0 text-[14px] w-[552px]" data-node-id="10:322" data-name="Permission text">
+                  <p className="font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[color:var(--learning-color-text,#202321)] whitespace-nowrap" data-node-id="10:323">
+                    语音情绪分析
+                  </p>
+                  <p className="font-['Noto_Sans_SC:Regular'] font-normal leading-[24px] relative shrink-0 text-[color:var(--learning-color-muted,#646b66)] w-[552px]" data-node-id="10:324">
+                    仅分析你主动录音的声学线索；与文字转写分开授权。
+                  </p>
+                </div>
+                <Switch className="content-stretch cursor-pointer flex gap-[var(--learning-space-0,0px)] h-[44px] items-center justify-center p-[var(--learning-space-0,0px)] relative shrink-0 w-[48px]" />
+              </div>
+            </div>
+            <div className="[word-break:break-word] bg-[var(--learning-color-subtle,#f2f4f2)] content-stretch flex flex-col gap-[var(--learning-space-4,4px)] items-start p-[var(--learning-space-16,16px)] relative rounded-[var(--learning-radius-12,12px)] shrink-0 text-[14px] w-[704px]" data-node-id="10:328" data-name="按住说话时才录音">
+              <p className="font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[color:var(--learning-color-text,#202321)] w-[672px]" data-node-id="10:329">
+                仅在你主动录音时采集
+              </p>
+              <p className="font-['Noto_Sans_SC:Regular'] font-normal leading-[24px] relative shrink-0 text-[color:var(--learning-color-muted,#646b66)] w-[672px]" data-node-id="10:330">
+                首次使用麦克风时单独请求转写权限。不启用语音情绪分析，也可以转成文字并编辑。
+              </p>
+            </div>
+            <p className="[word-break:break-word] font-['Noto_Sans_SC:Regular'] font-normal leading-[20px] relative shrink-0 text-[12px] text-[color:var(--learning-color-muted,#646b66)] w-[704px]" data-node-id="10:331">
+              数据说明：默认不保存原始音视频。处理位置、第三方服务、脱敏记录保存期限和删除方式，须在试用前的完整告知中确认。
+            </p>
+            <div className="content-stretch flex gap-[var(--learning-space-12,12px)] h-[44px] items-start p-[var(--learning-space-0,0px)] relative shrink-0 w-[704px]" data-node-id="10:332" data-name="Start actions">
+              <div className="bg-[var(--learning-color-text,#202321)] content-stretch flex gap-[var(--learning-space-8,8px)] h-[44px] items-center justify-center p-[var(--learning-space-0,0px)] relative rounded-[var(--learning-radius-999,999px)] shrink-0 w-[180px]" data-node-id="10:333" data-name="仅用文字开始">
+                <p className="[word-break:break-word] font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[14px] text-[color:var(--learning-color-bg,white)] whitespace-nowrap" data-node-id="I10:333;8:99">
+                  确认所选并开始
+                </p>
+              </div>
+              <div className="bg-[var(--learning-color-bg,white)] content-stretch flex gap-[var(--learning-space-8,8px)] h-[44px] items-center justify-center p-[var(--learning-space-0,0px)] relative rounded-[var(--learning-radius-999,999px)] shrink-0 w-[180px]" data-node-id="10:337" data-name="确认所选并开始">
+                <p className="[word-break:break-word] font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[14px] text-[color:var(--learning-color-text,#202321)] whitespace-nowrap" data-node-id="I10:337;8:131">
+                  仅使用文字
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

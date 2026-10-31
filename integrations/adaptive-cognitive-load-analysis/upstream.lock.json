@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/rajatmurhe/adaptive-cognitive-load-analysis",
+  "commit": "0c938e4fec21a852401c10213127a630d0b6cf75",
+  "source_path": "backend/cognitive_engine.py",
+  "git_blob_sha": "3567b82a5e5c635d3e5edd51fe3e647d2b03c1a6",
+  "sha256": "96f8ac916cce1e048d28ca9a4f565c31355f16d87838867a1eecd5e4cba62d36",
+  "license": "No license declared by upstream; retained for user-requested local integration; no redistribution grant is asserted."
+}

@@ -1,0 +1,114 @@
+const assetPathPrefix = "https://www.figma.com/api/mcp/asset/ece98731-2e0a-41e1-927f-a6588ddf532c";
+const imgIconLink = `${assetPathPrefix}/58c6a.svg`;
+const imgIconChart = `${assetPathPrefix}/ba0c8.svg`;
+const imgIconCode = `${assetPathPrefix}/fa2e6.svg`;
+const imgIconMenu = `${assetPathPrefix}/775a0.svg`;
+
+function IconLink({ className }: { className?: string }) {
+  return (
+    <div className={className || "relative size-[24px]"} data-node-id="8:57" data-name="Icon/Link">
+      <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgIconLink} />
+    </div>
+  );
+}
+
+function IconChart({ className }: { className?: string }) {
+  return (
+    <div className={className || "relative size-[24px]"} data-node-id="8:54" data-name="Icon/Chart">
+      <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgIconChart} />
+    </div>
+  );
+}
+
+function IconCode({ className }: { className?: string }) {
+  return (
+    <div className={className || "relative size-[24px]"} data-node-id="8:51" data-name="Icon/Code">
+      <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgIconCode} />
+    </div>
+  );
+}
+
+type TaskProps = {
+  className?: string;
+  device?: "Mobile";
+  topic?: "Variable" | "Mean" | "Causality";
+};
+
+function Task({ className, device = "Mobile", topic = "Variable" }: TaskProps) {
+  const isMobileAndCausality = device === "Mobile" && topic === "Causality";
+  const isMobileAndMean = device === "Mobile" && topic === "Mean";
+  return (
+    <div className={className || "bg-[var(--learning-color-bg,white)] border-[length:var(--learning-border-width,1px)] border-[var(--learning-color-border,#e1e5e2)] border-solid content-stretch flex gap-[var(--learning-space-12,12px)] h-[112px] items-start p-[var(--learning-space-20,20px)] relative rounded-[var(--learning-radius-16,16px)] w-[358px]"} id={isMobileAndCausality ? "node-8_194" : isMobileAndMean ? "node-8_186" : "node-8_178"}>
+      <div className="bg-[var(--learning-color-subtle,#f2f4f2)] content-stretch flex gap-[var(--learning-space-0,0px)] items-start p-[var(--learning-space-8,8px)] relative rounded-[var(--learning-radius-12,12px)] shrink-0 size-[40px]" id={isMobileAndCausality ? "node-8_195" : isMobileAndMean ? "node-8_187" : "node-8_179"} data-name="Subject icon">
+        {device === "Mobile" && topic === "Variable" && <IconCode className="relative shrink-0 size-[24px]" />}
+        {isMobileAndMean && <IconChart className="relative shrink-0 size-[24px]" />}
+        {isMobileAndCausality && <IconLink className="relative shrink-0 size-[24px]" />}
+      </div>
+      <div className="[word-break:break-word] content-stretch flex flex-[1_0_0] flex-col gap-[var(--learning-space-4,4px)] items-start min-w-px p-[var(--learning-space-0,0px)] relative" id={isMobileAndCausality ? "node-8_198" : isMobileAndMean ? "node-8_190" : "node-8_182"} data-name="Task content">
+        <p className="font-['Noto_Sans_SC:Medium'] font-medium leading-[28px] relative shrink-0 text-[16px] text-[color:var(--learning-color-text,#202321)] w-full" id={isMobileAndCausality ? "node-8_199" : isMobileAndMean ? "node-8_191" : "node-8_183"}>
+          {isMobileAndCausality ? "相关与因果" : isMobileAndMean ? "平均数" : "编程变量"}
+        </p>
+        <p className="font-['Noto_Sans_SC:Regular'] font-normal leading-[24px] relative shrink-0 text-[14px] text-[color:var(--learning-color-muted,#646b66)] w-full" id={isMobileAndCausality ? "node-8_200" : isMobileAndMean ? "node-8_192" : "node-8_184"}>
+          {isMobileAndCausality ? "寻找替代解释，改进比较" : isMobileAndMean ? "按人数加权，判断代表性" : "追踪旧值，修复交换"}
+        </p>
+        <p className="font-['Noto_Sans_SC:Regular'] font-normal leading-[20px] relative shrink-0 text-[12px] text-[color:var(--learning-color-muted,#646b66)] w-full" id={isMobileAndCausality ? "node-8_201" : isMobileAndMean ? "node-8_193" : "node-8_185"}>
+          约 8–10 分钟 · 可暂停
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function IconMenu({ className }: { className?: string }) {
+  return (
+    <div className={className || "relative size-[24px]"} data-node-id="8:7" data-name="Icon/Menu">
+      <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgIconMenu} />
+    </div>
+  );
+}
+
+export default function Mobile01() {
+  return (
+    <div className="bg-[var(--learning-color-bg,white)] content-stretch flex flex-col isolate items-start relative size-full" data-node-id="5:69" data-name="Mobile / 01 选择任务">
+      <div className="bg-[var(--learning-color-bg,white)] content-stretch flex gap-[var(--learning-space-8,8px)] h-[64px] items-center px-[var(--learning-space-16,16px)] py-[var(--learning-space-0,0px)] relative shrink-0 w-full z-[2]" data-node-id="13:494" data-name="Mobile header">
+        <div className="content-stretch flex gap-[var(--learning-space-0,0px)] items-start p-[var(--learning-space-12,12px)] relative shrink-0 size-[44px]" data-node-id="13:495" data-name="历史记录菜单">
+          <IconMenu className="relative shrink-0 size-[20px]" />
+        </div>
+        <p className="[word-break:break-word] flex-[1_0_0] font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] min-w-px relative text-[14px] text-[color:var(--learning-color-text,#202321)]" data-node-id="13:498">
+          学习助手
+        </p>
+        <button className="content-stretch cursor-pointer flex gap-[var(--learning-space-0,0px)] items-center justify-center p-[var(--learning-space-0,0px)] relative shrink-0 size-[44px]" data-node-id="33:1452" data-name="Avatar / account menu">
+          <div className="bg-[var(--learning-color-subtle,#f2f4f2)] border-[length:var(--learning-border-width,1px)] border-[var(--learning-color-border,#e1e5e2)] border-solid content-stretch flex gap-[var(--learning-space-0,0px)] items-center justify-center p-[var(--learning-space-0,0px)] relative rounded-[var(--learning-radius-999,999px)] shrink-0 size-[32px]" data-node-id="I33:1452;33:1270" data-name="Avatar / guest">
+            <p className="[word-break:break-word] font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[14px] text-[color:var(--learning-color-text,#202321)] text-left whitespace-nowrap" data-node-id="I33:1452;33:1271">
+              访
+            </p>
+          </div>
+        </button>
+      </div>
+      <div className="bg-[var(--learning-color-bg,white)] content-stretch flex flex-[1_0_0] flex-col gap-[var(--learning-space-16,16px)] items-start min-h-px overflow-x-clip overflow-y-auto p-[var(--learning-space-16,16px)] relative w-full z-[1]" data-node-id="13:504" data-name="Scrollable content viewport">
+        <div className="content-stretch flex flex-col gap-[var(--learning-space-16,16px)] items-start p-[var(--learning-space-0,0px)] relative shrink-0 w-full" data-node-id="13:505" data-name="Mobile content">
+          <p className="[word-break:break-word] font-['Noto_Sans_SC:Regular'] font-normal leading-[20px] relative shrink-0 text-[12px] text-[color:var(--learning-color-accent,#2e6653)] w-full" data-node-id="13:506">
+            每次一件小事
+          </p>
+          <p className="[word-break:break-word] font-['Noto_Sans_SC:Medium'] font-medium leading-[38px] relative shrink-0 text-[26px] text-[color:var(--learning-color-text,#202321)] w-full" data-node-id="13:507">
+            今天，想弄懂什么？
+          </p>
+          <p className="[word-break:break-word] font-['Noto_Sans_SC:Regular'] font-normal leading-[24px] relative shrink-0 text-[14px] text-[color:var(--learning-color-muted,#646b66)] w-full" data-node-id="13:508">
+            选一个短任务，和 AI 边聊边学。
+          </p>
+          <Task className="bg-[var(--learning-color-bg,white)] border-[length:var(--learning-border-width,1px)] border-[var(--learning-color-border,#e1e5e2)] border-solid content-stretch flex gap-[var(--learning-space-12,12px)] h-[112px] items-start p-[var(--learning-space-20,20px)] relative rounded-[var(--learning-radius-16,16px)] shrink-0 w-full" />
+          <Task className="bg-[var(--learning-color-bg,white)] border-[length:var(--learning-border-width,1px)] border-[var(--learning-color-border,#e1e5e2)] border-solid content-stretch flex gap-[var(--learning-space-12,12px)] h-[112px] items-start p-[var(--learning-space-20,20px)] relative rounded-[var(--learning-radius-16,16px)] shrink-0 w-full" topic="Mean" />
+          <Task className="bg-[var(--learning-color-bg,white)] border-[length:var(--learning-border-width,1px)] border-[var(--learning-color-border,#e1e5e2)] border-solid content-stretch flex gap-[var(--learning-space-12,12px)] h-[112px] items-start p-[var(--learning-space-20,20px)] relative rounded-[var(--learning-radius-16,16px)] shrink-0 w-full" topic="Causality" />
+          <div className="[word-break:break-word] bg-[var(--learning-color-bg,white)] content-stretch flex flex-col gap-[var(--learning-space-4,4px)] items-start p-[var(--learning-space-16,16px)] relative rounded-[var(--learning-radius-12,12px)] shrink-0 text-[14px] w-full" data-node-id="13:533" data-name="按自己的节奏来">
+            <p className="font-['Noto_Sans_SC:Medium'] font-medium leading-[22px] relative shrink-0 text-[color:var(--learning-color-text,#202321)] w-full" data-node-id="13:534">
+              按自己的节奏来
+            </p>
+            <p className="font-['Noto_Sans_SC:Regular'] font-normal leading-[24px] relative shrink-0 text-[color:var(--learning-color-muted,#646b66)] w-full" data-node-id="13:535">
+              不需要准备基础知识，也可以只用文字。
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
