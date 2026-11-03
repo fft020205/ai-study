@@ -7,7 +7,7 @@
 | 对话前校准准备 | `lessonReadiness.ts`、`LessonPreparation.tsx`、`VisionService.dialogue_ready` | [16-lesson-preparation.md](modules/16-lesson-preparation.md) |
 | 即时消息与流式回复 | `study/stream_protocol.py`、`stream_response.py`、`lib/turnStream.ts` | [15-streaming-dialogue.md](modules/15-streaming-dialogue.md) |
 | 历史名称与删除 | `features/history`、`study/storage.py` | [14-session-history.md](modules/14-session-history.md) |
-| 界面与设计 | `apps/web/src/app`、`components` | [01-ui.md](modules/01-ui.md) |
+| 界面、设计与多语言 | `apps/web/src/app`、`components`、`i18n` | [01-ui.md](modules/01-ui.md) |
 | 课程与学习流程 | `study/courses.py`、`learning.py`、旧题兼容tasks.py | [02-learning.md](modules/02-learning.md) |
 | 产品 API 与协议 | `study/main.py`、`contracts.py`、前端 `lib` | [03-product-api.md](modules/03-product-api.md) |
 | AI 接口与 DeepTutor 适配 | `study/ai.py` | [04-ai-interface.md](modules/04-ai-interface.md) |
@@ -34,6 +34,7 @@
 - `main` 编排鉴权、版本、控制和持久化；AI 调用期间不持有数据库事务。
 - `storage` 不理解教学文案，可独立替换。
 - `CameraPreview`经视觉hook发送派生特征，不直连AI或数据库；`vision`独立维护有效校准与原引擎状态。
+- UI 只在显示层依赖 `i18n`；课程事实、学习状态、API/SSE协议和模型动态正文不反向依赖翻译资源。新增语言只扩展同形资源、语言代码和选择项。
 - 每次模型请求前刷新视觉快照；AI解释与原始特征分开，用户控制和自述优先。
 
 ## 接下来最合理的开发顺序

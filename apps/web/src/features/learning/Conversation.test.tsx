@@ -32,3 +32,10 @@ it('shows model-generated support titles and guidance without the removed correc
  expect(markup).toContain('需要一点帮助');
  expect(markup).toContain('暂时不用');
 });
+
+it('keeps Markdown tables in a labelled, keyboard-focusable scroll region',()=>{
+ const markup=render('waiting',false,{messages:[{id:'m',role:'assistant',text:'| Capability | Status |\n|---|---|\n| Reasoning | Verified |',code:'',source:'ai',node_id:'q',created_at:1}]});
+ expect(markup).toContain('<div class="table-scroll" role="region" aria-label="表格，可横向滚动" tabindex="0"><table>');
+ expect(markup).toContain('<th>Capability</th>');
+ expect(markup).toContain('<td>Reasoning</td>');
+});

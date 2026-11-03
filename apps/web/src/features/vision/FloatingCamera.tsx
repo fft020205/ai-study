@@ -1,7 +1,9 @@
 import {useCallback,useLayoutEffect,useRef,useState,type ReactNode,type PointerEvent,type KeyboardEvent} from 'react';
+import {useTranslation} from 'react-i18next';
 import {clampCameraPosition,type CameraPoint} from './cameraPosition';
 
 export function FloatingCamera({children}:{children:ReactNode}){
+  const {t}=useTranslation();
   const element=useRef<HTMLDivElement>(null);
   const positionRef=useRef<CameraPoint|null>(null);
   const drag=useRef<{pointerId:number;startX:number;startY:number;origin:CameraPoint}|null>(null);
@@ -46,12 +48,13 @@ export function FloatingCamera({children}:{children:ReactNode}){
     const delta=deltas[event.key];if(!delta)return;
     event.preventDefault();const rect=event.currentTarget.getBoundingClientRect();move({x:rect.left+delta.x,y:rect.top+delta.y});
   };
-  return <div ref={element} className={`camera-floating${dragging?' dragging':''}`} role="group" aria-label="可拖动摄像头窗口"
+  return <div ref={element} className={`camera-floating${dragging?' dragging':''}`} role="group" aria-label={t('camera.draggable')}
     style={position?{left:position.x,top:position.y,right:'auto'}:undefined}
     onPointerDown={start} onPointerMove={event=>{const active=drag.current;if(active?.pointerId===event.pointerId)move({x:active.origin.x+event.clientX-active.startX,y:active.origin.y+event.clientY-active.startY});}}
     onPointerUp={finish} onPointerCancel={finish} onLostPointerCapture={()=>{drag.current=null;setDragging(false);}} onKeyDown={keyboardMove}>{children}</div>;
 }
 
 export function CameraDragHandle(){
-  return <button type="button" className="camera-drag-handle" data-camera-drag-handle aria-label="移动摄像头窗口" title="拖动移动；方向键微调位置"><span aria-hidden="true">⠿</span></button>;
+  const {t}=useTranslation();
+  return <button type="button" className="camera-drag-handle" data-camera-drag-handle aria-label={t('camera.move')} title={t('camera.moveHelp')}><span aria-hidden="true">⠿</span></button>;
 }

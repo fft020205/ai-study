@@ -1,5 +1,6 @@
 'use client';
 import {useCallback,useEffect,useRef,useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {Shell} from '@/components/Shell';
 import {SessionHistoryDialog,type HistoryAction} from '@/features/history/SessionHistoryDialog';
 import {applySessionTitle,mergeSession} from '@/features/history/sessionMetadata';
@@ -16,6 +17,8 @@ import type {CameraAnalysisState} from '@/features/vision/visualAnalysis';
 import {SessionSummary} from '@/features/learning/SessionSummary';
 import {CameraPreview} from '@/features/vision/CameraPreview';
 import {useActivity} from '@/features/learning/useActivity';
+import {courseTitle,localizeSessionTitle} from '@/i18n/course';
+import {localizeError} from '@/i18n/errors';
 import {api} from '@/lib/api';
 import {readTurnStream} from '@/lib/turnStream';
 import type {ActiveTurn} from '@/features/learning/activeTurn';
@@ -23,6 +26,7 @@ import type {Action,DialogueEvent,StreamEvent,Bootstrap,Consent,LearningSession,
 
 type View='tasks'|'consent'|'learning'|'settings'|'ai-settings'|'privacy';
 export default function Home(){
+  const {t}=useTranslation();
   const [data,setData]=useState<Bootstrap|null>(null),[session,setSession]=useState<LearningSession|null>(null),[selected,setSelected]=useState<Task|null>(null),[view,setView]=useState<View>('tasks');
   const [draft,setDraft]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[composing,setComposing]=useState(false),[reading,setReading]=useState(false),[cameraLive,setCameraLive]=useState(false),[collapseSignal,setCollapseSignal]=useState(0);
   const [correction,setCorrection]=useState<string|null>(null),[historyAction,setHistoryAction]=useState<HistoryAction|null>(null);
@@ -131,22 +135,22 @@ export default function Home(){
   }} onLive={setCameraLive} onClose={()=>control('consent',{consent:{support:session?.consent.support||false,camera:false}})}/>;
 
   return <Shell sessions={data?.sessions||[]} current={session} cameraLive={cameraLive} onNew={newLearning} onOpen={s=>void openSession(s)} onRename={s=>setHistoryAction({mode:'rename',session:s})} onDelete={s=>setHistoryAction({mode:'delete',session:s})} onAISettings={()=>void navigate('ai-settings')} onPrivacy={()=>void navigate('privacy')} onEnd={end}>
-    {error&&<div className="global-notice"><Notice>{error}<button onClick={()=>setError('')} aria-label="关闭提示">关闭</button></Notice></div>}
-    {!data?<section className="content-page"><div className="readable"><h1>学习助手</h1><p className="muted">{error?'学习服务暂时不可用。':'正在准备学习空间…'}</p>{error&&<Button onClick={()=>void refresh()}>重试连接</Button>}</div></section>:<>
+    {error&&<div className="global-notice"><Notice>{localizeError(error)}<button onClick={()=>setError('')} aria-label={t('loading.closeNotice')}>{t('loading.close')}</button></Notice></div>}
+    {!data?<section className="content-page"><div className="readable"><h1>{t('loading.title')}</h1><p className="muted">{t(error?'loading.unavailable':'loading.preparing')}</p>{error&&<Button onClick={()=>void refresh()}>{t('loading.retry')}</Button>}</div></section>:<>
       {view==='ai-settings'&&<AIConnectionSettings onBack={()=>setView(session?'learning':'tasks')} onConfigured={()=>void refresh()}/>}
-      {view==='tasks'&&<TaskSelector tasks={data.tasks} onSelect={t=>{setSelected(t);setView('consent');}}/>}
-      {view==='consent'&&selected&&<ConsentPanel title={selected.title} aiConfigured={data.capabilities.ai_configured} busy={busy} onSubmit={c=>void start(c)} onBack={()=>setView('tasks')} onAISettings={()=>setView('ai-settings')}/>}
-      {view==='settings'&&(session?.status==='active'?<ConsentPanel key={session.id+':settings'} title={session.title} settings initial={session.consent} aiConfigured={data.capabilities.ai_configured} busy={busy} onSubmit={c=>void control('consent',{consent:c}).then(()=>setView('learning'))} onBack={()=>setView('learning')} onAISettings={()=>setView('ai-settings')}/>:<section className="content-page"><div className="readable stack-20"><p className="eyebrow">随时可更改</p><h1>学习设置</h1><p className="muted">选择任务后，你可以分别决定是否开启主动支持与摄像头。</p><div className="actions"><Button onClick={newLearning}>选择学习任务</Button><Button onClick={()=>setView('ai-settings')}>AI 接口设置</Button></div></div></section>)}
+      {view==='tasks'&&<TaskSelector tasks={data.tasks} onSelect={selectedTask=>{setSelected(selectedTask);setView('consent');}}/>}
+      {view==='consent'&&selected&&<ConsentPanel title={courseTitle(selected.id,selected.title)} aiConfigured={data.capabilities.ai_configured} busy={busy} onSubmit={c=>void start(c)} onBack={()=>setView('tasks')} onAISettings={()=>setView('ai-settings')}/>}
+      {view==='settings'&&(session?.status==='active'?<ConsentPanel key={session.id+':settings'} title={localizeSessionTitle(session)} settings initial={session.consent} aiConfigured={data.capabilities.ai_configured} busy={busy} onSubmit={c=>void control('consent',{consent:c}).then(()=>setView('learning'))} onBack={()=>setView('learning')} onAISettings={()=>setView('ai-settings')}/>:<section className="content-page"><div className="readable stack-20"><p className="eyebrow">{t('consent.editable')}</p><h1>{t('consent.settingsTitle')}</h1><p className="muted">{t('consent.noSessionDescription')}</p><div className="actions"><Button onClick={newLearning}>{t('consent.chooseTask')}</Button><Button onClick={()=>setView('ai-settings')}>{t('common.aiSettings')}</Button></div></div></section>)}
       {view==='learning'&&session&&(session.status==='ended'?<SessionSummary session={session} onHome={newLearning} onPrivacy={()=>setView('privacy')}/>:<>
-        {needsCalibration?<LessonPreparation title={session.title} camera={cameraAnalysis?.sessionId===session.id?cameraAnalysis:null} busy={busy} onRetry={()=>setCameraRetry(v=>v+1)} onDisableCamera={()=>setCameraClose(v=>v+1)}/>:<>
+        {needsCalibration?<LessonPreparation title={localizeSessionTitle(session)} camera={cameraAnalysis?.sessionId===session.id?cameraAnalysis:null} busy={busy} onRetry={()=>setCameraRetry(v=>v+1)} onDisableCamera={()=>setCameraClose(v=>v+1)}/>:<>
           <Conversation session={session} configured={data.capabilities.ai_configured} onAISettings={()=>void navigate('ai-settings')} turn={turn} onRetry={()=>void retryTurn()} busy={busy} onAction={a=>void control(a)} onReading={setReading}/>
           <Composer draft={draft} onChange={setDraft} onSend={()=>void send()} onHint={()=>void control('hint')} onComposing={setComposing} busy={busy} configured={data.capabilities.ai_configured} onFocus={()=>setCollapseSignal(v=>v+1)}/>
         </>}
         {camera}
       </>)}
-      {view==='privacy'&&<section className="content-page"><div className="readable stack-20"><p className="eyebrow">由你掌控</p><h1>隐私与数据说明</h1><div className="info-block"><strong>文字与学习记录</strong><p>只有点击发送的文字会进入产品服务。草稿保留在当前页面内存；刷新或离开会清除。访客身份以浏览器 Cookie 区分，请勿在公共设备上共享同一浏览器档案。</p></div><div className="info-block"><strong>摄像头</strong><p>视频和人脸关键点只在浏览器内处理，不发送、不保存。眨眼频率、视线偏移和头部运动特征通过本机后端的视觉引擎判定，临时保存在内存；当前有效状态摘要会提供给你配置的AI服务。视觉行为提示不等于情绪或心理诊断。收起仅隐藏预览；关闭、后台或结束会停采并关闭视觉连接。</p></div><div className="info-block"><strong>AI 服务与保留期限</strong><p>连接 AI 后，已提交文字、近期对话、当前练习及有依据的自述状态会发送至配置的第三方服务。该服务的保存与训练设置须由接入者核实。当前本地学习记录保留至你主动删除，没有自动清理期限。</p></div><div className="actions"><Button onClick={()=>setView(session?'learning':'tasks')}>返回</Button>{session&&<><a className="button secondary" href={`/api/sessions/${session.id}/export`} download>导出这次学习</a><Button variant="ghost" onClick={()=>setHistoryAction({mode:'delete',session})}>删除这次学习记录</Button></>}</div><p className="caption muted">删除只覆盖本产品存储；已发送至第三方服务的记录需按服务商规则另行处理。</p></div></section>}
+      {view==='privacy'&&<section className="content-page"><div className="readable stack-20"><p className="eyebrow">{t('privacy.eyebrow')}</p><h1>{t('privacy.title')}</h1><div className="info-block"><strong>{t('privacy.textTitle')}</strong><p>{t('privacy.textBody')}</p></div><div className="info-block"><strong>{t('privacy.cameraTitle')}</strong><p>{t('privacy.cameraBody')}</p></div><div className="info-block"><strong>{t('privacy.aiTitle')}</strong><p>{t('privacy.aiBody')}</p></div><div className="actions"><Button onClick={()=>setView(session?'learning':'tasks')}>{t('common.back')}</Button>{session&&<><a className="button secondary" href={`/api/sessions/${session.id}/export`} download>{t('privacy.export')}</a><Button variant="ghost" onClick={()=>setHistoryAction({mode:'delete',session})}>{t('privacy.delete')}</Button></>}</div><p className="caption muted">{t('privacy.deletionNote')}</p></div></section>}
     </>}
-    {correction!==null&&<Dialog titleId="correction-title" onClose={()=>setCorrection(null)}><h2 id="correction-title">纠正我的理解</h2><p className="muted">以你的说明为准，当前题目会保留。</p><textarea autoFocus aria-label="你的纠正" value={correction} maxLength={1000} onChange={e=>setCorrection(e.target.value)} placeholder="其实，我现在是这样想的…"/><div className="actions"><Button variant="primary" disabled={!correction.trim()} onClick={()=>{const text=correction;setCorrection(null);void control('correct',{text});}}>确认纠正</Button><Button onClick={()=>setCorrection(null)}>返回</Button></div></Dialog>}
+    {correction!==null&&<Dialog titleId="correction-title" onClose={()=>setCorrection(null)}><h2 id="correction-title">{t('correction.title')}</h2><p className="muted">{t('correction.description')}</p><textarea autoFocus aria-label={t('correction.label')} value={correction} maxLength={1000} onChange={e=>setCorrection(e.target.value)} placeholder={t('correction.placeholder')}/><div className="actions"><Button variant="primary" disabled={!correction.trim()} onClick={()=>{const text=correction;setCorrection(null);void control('correct',{text});}}>{t('correction.confirm')}</Button><Button onClick={()=>setCorrection(null)}>{t('common.back')}</Button></div></Dialog>}
     {historyAction&&<SessionHistoryDialog key={historyAction.mode+historyAction.session.id} action={historyAction} onClose={()=>setHistoryAction(null)} onRenamed={title=>{
       setSession(old=>old?applySessionTitle(old,title):old);
       setData(d=>d?{...d,sessions:d.sessions.map(s=>applySessionTitle(s,title))}:d);

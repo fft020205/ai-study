@@ -62,7 +62,7 @@ test_history.py新增4项：持久化与重启/导出/同名幂等；空值/长�
 
 ## 支持卡片保留回归
 
-`test_support_retention.py` 验证 waiting/cognitive_load/fatigue/visual_signal 四类已显示卡片在输入、输入法、阅读、busy 和后台心跳之后仍保留，旧30秒期限不再撤销，普通/流式成功或失败及孤立 pending 恢复不丢失。明确选择、暂停、结束和撤权仍清除。`test_dialogue.py` 继续验证尚未显示的慢支持生成可被输入取消。`Conversation.test.tsx` 渲染真实组件验证 busy、旧期限、null期限及用户控制；`vitest.config.mts` 仅提供与 tsconfig 一致的 @ 源码别名。运行 npm test 和 npm run build；测试不调用真实模型或开启摄像头。
+`test_support_retention.py` 验证 waiting/cognitive_load/fatigue/visual_signal 四类已显示卡片在输入、输入法、阅读、busy 和后台心跳之后仍保留，旧30秒期限不再撤销，普通/流式成功或失败及孤立 pending 恢复不丢失。明确选择、暂停、结束和撤权仍清除。`test_dialogue.py` 继续验证尚未显示的慢支持生成可被输入取消。`Conversation.test.tsx` 渲染真实组件验证 busy、旧期限、null期限及用户控制。`vitest.config.mts` 保持与 tsconfig 一致的 @ 源码别名，并使用 jsdom 与 `vitest.setup.ts` 初始化i18n。运行 npm test 和 npm run build；测试不调用真实模型或开启摄像头。
 
 ## 自适应支持回归
 
@@ -79,3 +79,21 @@ test_lesson_preparation.py 用原 CognitiveEngine、合成特征与测试 Provid
 ## 每轮三种状态与总次数不限
 
 test_policy.py 验证旧全局计数/冷却字段不再挡住新状态、每轮三种语义状态、来源变化不重复、同失败状态退避以及正常回复后等待窗口重计。test_adaptive_support.py 以真实API与测试Provider验证整次学习连续新建5张卡、90秒内同轮三种状态生成、同轮第四种被拒绝、下一轮额度恢复、复用同一张卡以及私有计数不公开。测试不调用用户配置的真实第三方API。
+
+## 多语言与语言切换（2026-11-03）
+
+`src/i18n/i18n.test.tsx` 的7项测试覆盖中英文递归 key 与插值变量一致、英文非空、复数、浏览器语言归一化、无刷新切换、显式偏好持久化与恢复、metadata、损坏或不支持语言的回退、localStorage 异常，以及公开课程/自动历史名称/自定义名称/动态焦点/已知和未知错误的显示边界。`CameraPreview.test.tsx` 使用模拟媒体接口验证语言切换不会再次调用 `getUserMedia`，这只是生命周期回归，不是摄像头硬件实测。
+
+Vitest 使用 jsdom，`vitest.setup.ts` 初始化真实 i18n 资源与实例；不注入教学或模型测试文案。最终 `npm test` 通过后端173项、前端12个测试文件共45项及TypeScript检查，`npm run build` 成功。
+
+真实 Google Chrome 156.0.8078.80（无头模式）验收覆盖首页、课程设置、学习对话、结束总结、历史重命名/删除、隐私和独立AI设置页；核对同节点实时切换、刷新恢复、浏览器默认语言、`<html lang>`/title/description、自定义名称与输入草稿保留，以及损坏偏好和存储抛出 `SecurityError` 时的行为。相关场景分别检查1440×960、1024×768、390×844和360×800视口的横向溢出、选择器边界及英文长文本；首页和总结覆盖多个尺寸，AI设置额外检查360px中英文，并非每个页面都执行完整四尺寸矩阵。
+
+浏览器验收使用全新访客上下文，测试学习记录已删除并清理；没有调用真实模型、修改真实AI配置或开启实体摄像头。Safari、Firefox、实体移动设备、真实摄像头硬件和完整辅助技术审计未执行，视口模拟不能替代这些验证。
+
+## 英文全尺寸布局专项（2026-11-03）
+
+真实Google Chrome 156.0.8078.80通过Playwright覆盖18种视口：1920×1080、1440×900、1366×768、1280×720、1200×800、1199×800、1024×768、820×1180、768×1024、767×1024、430×932、390×844、375×667、360×800、320×568、844×390、667×375、568×320。主矩阵形成229条扫描记录，生产组件补测与交互形成97条记录；检查元素/Range边界、裁切祖先、局部滚动、整页宽度、hit-test、键盘与真实点击，不能只用 `document.scrollWidth` 判断祖先裁切。
+
+确认并修复7类问题：矮横屏移动抽屉入口不可达（阻断性），桌面新学习按钮、移动摄像头重开按钮、长错误Notice/历史错误、窄屏Markdown表格和矮横屏Dialog布局（一般性6类）。`Conversation.test.tsx` 新增表格区域语义回归后，当前前端为12个文件46项；最终 `npm test` 另通过后端173项与TypeScript，`npm run build` 成功。表格Tab/方向键、Dialog内部滚动/Escape/焦点循环与恢复、移动抽屉和账户菜单隐私入口、学习空状态操作均做真实交互复核。
+
+主矩阵64条原始重叠候选经截图、裁切上下文、hit-test或点击确认属于导航遮罩、账户浮层和滚动裁切，不计为64个缺陷。补测路由已删除并确认404。测试使用独立英文访客上下文、测试学习记录及浏览器fixture；未调用真实模型、保存真实AI配置或开启实体摄像头。Safari、Firefox、实体设备、系统字体/缩放全矩阵、摄像头硬件及完整辅助技术审计仍未执行。完整证据见[布局排查报告](../UI-LAYOUT-AUDIT-20261103.md)。

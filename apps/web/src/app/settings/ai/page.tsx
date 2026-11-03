@@ -1,4 +1,9 @@
+'use client';
+
+import {useTranslation} from 'react-i18next';
 import {AIConnectionSettings} from '@/features/settings/AIConnectionSettings';
+import {LanguageSwitcher} from '@/components/LanguageSwitcher';
 export default function AISettingsPage(){
-  return <main className="standalone-settings"><header className="header"><a href="/">学习助手</a></header><AIConnectionSettings/></main>;
+  const {t}=useTranslation();
+  return <main className="standalone-settings"><header className="header"><a href="/">{t('common.appName')}</a><LanguageSwitcher/></header><AIConnectionSettings/></main>;
 }

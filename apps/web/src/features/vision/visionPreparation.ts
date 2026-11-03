@@ -20,4 +20,3 @@ export function preparationTransition(state:VisionPreparation,event:PreparationE
 export function preparationSeconds(state:VisionPreparation,now:number):number{
   return state.startedAt===null?0:Math.max(0,Math.floor((now-state.startedAt)/1000));
 }
-export const preparationLabels:Record<PreparationStage,string>={off:'视觉检测未开启',loading_runtime:'正在加载识别资源',loading_model:'正在初始化模型',checking_frame:'正在检查画面',ready:'视觉检测已就绪',error:'视觉检测暂不可用'};
