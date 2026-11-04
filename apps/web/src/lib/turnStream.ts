@@ -1,4 +1,5 @@
-import {ApiError} from './api';
+import {ApiError,responseError} from './api';
+import {currentLanguage} from '@/i18n';
 import type {StreamEvent,LearningSession} from './types';
 export type TurnFrame={event:'accepted'|'status'|'delta'|'complete'|'error';data:{request_id:string;session?:LearningSession;message_id?:string|null;phase?:string;text?:string;detail?:string;status?:number}};
 export class EventDecoder{
@@ -18,8 +19,8 @@ export class EventDecoder{
 }
 export async function readTurnStream(session:LearningSession,text:string,event:StreamEvent,requestId:string,signal:AbortSignal,onFrame:(frame:TurnFrame)=>void){
   const response=await fetch(`/api/sessions/${session.id}/turns/stream`,{method:'POST',credentials:'same-origin',cache:'no-store',signal,
-    headers:{'Content-Type':'application/json','Accept':'text/event-stream','X-Study-Client':'web-v1'},body:JSON.stringify({text,event,request_id:requestId,version:session.version})});
-  if(!response.ok){const body=await response.json().catch(()=>({}));throw new ApiError(typeof body.detail==='string'?body.detail:'消息未能发送，请重试。',response.status);}
+    headers:{'Content-Type':'application/json','Accept':'text/event-stream','X-Study-Client':'web-v1'},body:JSON.stringify({text,event,request_id:requestId,version:session.version,language:currentLanguage()})});
+  if(!response.ok)throw await responseError(response,'消息未能发送，请重试。');
   if(!response.body||!response.headers.get('content-type')?.includes('text/event-stream'))throw new ApiError('服务未返回流式响应。',502);
   const reader=response.body.getReader(),utf8=new TextDecoder(),decoder=new EventDecoder();let complete=false;
   try{

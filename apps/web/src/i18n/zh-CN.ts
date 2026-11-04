@@ -178,6 +178,8 @@ export const zhCN = {
     selfDetail: '你说：“{{quote}}”', tagLabel: '{{label}}，{{source}}', tooltip: '{{source}}。{{detail}}'
   },
   errors: {
+    serverVersionOutdated: '学习服务版本较旧，请重启项目后刷新页面。',
+    invalidRequest: '请求参数无效，请检查后重试。',
     requestFailed: '请求未完成，请稍后重试。', operationFailed: '操作没有完成，请重试。',
     operationIncomplete: '操作未完成，请重试。',
     learningServiceOffline: '暂时无法连接学习服务，请确认项目已启动，然后重试。',

@@ -102,3 +102,7 @@ npm run build
 消息发送现采用即时用户气泡、思考动画与真实SSE增量；普通回复不附带固定建议按钮。消息与重试、模型流式兼容和按需提示规则见[15-streaming-dialogue.md](docs/modules/15-streaming-dialogue.md)。
 
 开启摄像头的课程先显示校准准备页，有效画面累计60秒且基线充分后才自动生成AI开场；不启用摄像头可直接文字学习。断线/重开重新准备，重试/关闭入口和已发文字保留。当前不持久保存个人基线，复用可行性与模块修改入口见 [16-lesson-preparation.md](docs/modules/16-lesson-preparation.md)。
+
+## 中英文界面与 AI 对话
+
+右上角语言选择器支持简体中文与英文，偏好在当前浏览器保存。新会话及后续真实AI生成（包括支持卡片）跟随当前语言；已保存对话保留原文。正在输出的回复继续完成，切换不重置摄像头或校准。传输、并发和其他AI工具的修改入口见[17-dialogue-language.md](docs/modules/17-dialogue-language.md)。

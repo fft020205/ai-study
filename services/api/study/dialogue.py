@@ -88,6 +88,7 @@ def generation_context(s, text, event, assessment, state):
     c=course_for(s);exercise=s.get('exercise')
     policy=response_policy(state,assessment,event)
     return {
+        'response_language':s.get('language','zh-CN'),
         'dialogue_version':DIALOGUE_VERSION,'course':c,'focus':focus_for(s),
         'history':history_for(s),'history_is_bounded':True,'student_text':text,'event':event,
         'active_exercise':{'prompt':exercise['prompt']} if exercise else None,

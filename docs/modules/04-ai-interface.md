@@ -64,3 +64,7 @@ event=support 时额外输入 proactive_context={kind,signals} 与 previous_supp
 用户可见状态表达已统一精简到一句自然、暂定的疲劳/负荷/卡点描述，再接具体情感支持和建议；普通回复与支持卡共用 REPLY_SYSTEM。默认不主动列出眨眼、视线偏移、基线、阈值、CLI 等判断过程，也不重复一段方法说明。用户明确询问依据时才简洁解释；内部 visual_judgment.reason、实时输入和证据校验继续保留。只改表达，不删解决方案、不改变状态来源或视觉通信。该改动影响下一次生成，不改写已保存历史消息；真实模型是否始终遵循需实际评估。
 
 摄像头模式的校准前置条件：API 在新模型请求开始前要求当前授权 run 已完成且基线充分，before_request 在内部评价和回复生成前再次检查。准备不足返回409，不提前出题或发起模型请求；中途失去 run 时清理 pending 并保留已接受文字供重试。camera=false 的文字学习不等待。后台支持同样门控，详见模块16。
+
+## 模型回复语言（2026-11-04）
+
+评估与生成payload新增 `response_language`，来自本轮服务端会话快照。评估器支持中英文并保留原文证据；共享REPLY_SYSTEM要求reply、support_title、练习自然语言和visual_judgment.reason遵循en/zh-CN偏好，课程和枚举不变。适用于普通、流式及后台支持，兼容旧记录中文回退；不额外调用翻译模型。并发与完整接口见[模块17](17-dialogue-language.md)。

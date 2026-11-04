@@ -651,6 +651,21 @@
       },
       "Activity": {
         "properties": {
+          "language": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "zh-CN",
+                  "en"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
           "version": {
             "type": "integer",
             "minimum": 0.0,
@@ -691,6 +706,21 @@
       },
       "Answer": {
         "properties": {
+          "language": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "zh-CN",
+                  "en"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
           "text": {
             "type": "string",
             "maxLength": 4000,
@@ -749,6 +779,21 @@
       },
       "Control": {
         "properties": {
+          "language": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "zh-CN",
+                  "en"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
           "action": {
             "type": "string",
             "enum": [
@@ -799,6 +844,15 @@
       },
       "CreateSession": {
         "properties": {
+          "language": {
+            "type": "string",
+            "enum": [
+              "zh-CN",
+              "en"
+            ],
+            "title": "Language",
+            "default": "zh-CN"
+          },
           "task_id": {
             "type": "string",
             "enum": [
@@ -849,6 +903,21 @@
       },
       "StreamAnswer": {
         "properties": {
+          "language": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "zh-CN",
+                  "en"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
           "text": {
             "type": "string",
             "maxLength": 4000,

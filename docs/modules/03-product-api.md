@@ -79,3 +79,11 @@ camera_alerts公共会话字段仍只保存自述投影；视觉提醒来自独�
 camera=true 时生成入口要求当前 owner/session/consent 的视觉 run 已完成实际60秒有效采样且 baseline_quality=adequate；否则409，detail 为摄像头尚未完成校准。HTTP、SSE、AI教学 controls 和主动支持均执行，不新增可由客户端提交的完成标记。优先控制照常可用，纠正可保存但准备期间不调用模型。SSE 已 accepted 文字在中途断线时保留；每次模型调用、delta 和最终提交再次检查。详情见模块16。
 
 主动支持额度现为每轮最多3次不同状态内容，首次生成与原卡重写共享，整次会话不限总量、无90秒全局冷却。轮次由服务端正常回复完成后的dialogue_turn决定，自动支持不推进；客户端不能上传额度/状态标记。调用前及提交前检查额度和语义状态去重，失败只对同状态退避30秒，见模块05。公开episode合同不变。
+
+## 语言偏好（2026-11-04）
+
+创建请求新增 `language`，缺省 `zh-CN`；turns/stream、turns、controls、activity新增可选语言，省略或null继承会话值，白名单为 `zh-CN` / `en`。public session返回language，旧记录缺省中文；OpenAPI已同步。活动同步按版本处理，生成开始后固定本轮偏好，完整行为见[模块17](17-dialogue-language.md)。
+
+## 请求校验错误显示（2026-11-04）
+
+`lib/api.ts` 的responseError由普通JSON与SSE入口共享。服务端detail字符串按原合同显示；422校验数组不再统一回落为模糊失败：body.language的extra_forbidden说明API进程未更新，提示重启项目并刷新；其他422给出参数无效提示。仅检查错误类型及字段位置，不显示校验对象中的input或原始请求。界面通过现有错误翻译映射显示中英文。

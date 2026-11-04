@@ -1,9 +1,11 @@
+import type {Language} from '@/i18n';
+
 export type Consent = { support: boolean; camera: boolean };
 export type Task = { id: string; title: string; subtitle: string; icon: 'code'|'chart'|'link'; steps: number; content_version: string };
 export type Message = { id: string; request_id?:string; role: 'user'|'assistant'|'system'; text: string; code: string; source: 'course'|'hint'|'answer'|'ai'|'submitted'|'control'|'correction'|'command'; node_id: string; created_at: number };
 export type CameraAlert = {kind:'fatigue'|'high_load';source:'self_report'|'correction'|'visual_heuristic';evidence_quote:string;evidence_note?:string;captured_at:number;expires_at:number};
 export type LearningSession = {
-  id: string; title: string; title_version: number; task_id: string; content_version: string; dialogue_version: string; version: number;
+  id: string; title: string; title_version: number; language?: Language; task_id: string; content_version: string; dialogue_version: string; version: number;
   status: 'active'|'ended'; support_mode: 'on'|'off'|'paused'; consent: Consent;
   created_at: number; updated_at: number; node_index: number; total_steps: number;
   messages: Message[]; records: {node_id: string; status: string; hints:number}[];

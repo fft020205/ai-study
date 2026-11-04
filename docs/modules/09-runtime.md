@@ -55,3 +55,9 @@ apps/web/public/vision/ 是可重建的模型/WASM下载目录，不加入Git；
 提交前核对 Git 暂存区清单和敏感值扫描；不输出密钥，不将真实学习记录、运行配置或临时数据库上传。仓库默认为用户个人账号下的私有仓库。
 
 个人私有仓库为 https://github.com/fft020205/ai-study ，默认分支 main。首次克隆按根 README 安装依赖和固定视觉资源；本机原目录仍可直接 npm run dev。后续正常 git add / git commit / git push 同步源码，忽略规则不会删除本地配置、学习数据或下载资源。
+
+## 开发时同步后端版本（2026-11-04）
+
+`npm run dev` 现在为Uvicorn增加 `--reload --reload-dir services/api/study`，后端Python代码变化后自动重载，避免Next已热更新而API仍拒绝新增请求字段。仅用于开发，不增加API worker；配置文件与视觉资源目录不在监听范围。修改.env或启动参数仍需手动重启整套开发服务。重载会清理内存中的生成/视觉run，已有数据库、AI配置和学习记录保留，摄像头需按原流程重新校准。
+
+新增运行参数不会自动改变已经启动的旧进程；首次采用本次脚本需重启npm run dev。当前端遇到旧API拒绝language字段时，显示明确的重启提示，JSON与SSE一致；不回显422中的input或完整校验对象。

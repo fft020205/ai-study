@@ -8,6 +8,7 @@ from .courses import COURSES, DIALOGUE_VERSION, course_for, focus_for
 
 AI_ACTIONS = {'open','hint','answer','continue','skip'}
 ACTION_LABELS = {'hint':'给我一点提示','answer':'请给我完整示范','continue':'继续聊这个课题','skip':'换个例子试试'}
+ACTION_LABELS_EN = {'hint':'Give me a small hint','answer':'Show me a full example','continue':'Keep exploring this topic','skip':'Try another example'}
 
 
 def ensure_dialogue(s):
@@ -28,9 +29,9 @@ def message(s, role, text, source='ai', code=''):
         node_id=s['focus_id'],created_at=time.time()))
 
 
-def new_session(task_id, consent):
+def new_session(task_id, consent, language='zh-CN'):
     now=time.time();focus=COURSES[task_id]['objectives'][0]['id']
-    return dict(id=str(uuid.uuid4()),task_id=task_id,content_version=DIALOGUE_VERSION,dialogue_version=DIALOGUE_VERSION,version=0,
+    return dict(id=str(uuid.uuid4()),task_id=task_id,language=language,content_version=DIALOGUE_VERSION,dialogue_version=DIALOGUE_VERSION,version=0,
         status='active',support_mode='on' if consent.support else 'off',consent=consent.model_dump(),
         consent_log=[dict(at=now,**consent.model_dump())],created_at=now,updated_at=now,
         node_index=0,focus_id=focus,exercise=None,question_key=str(uuid.uuid4()),
@@ -52,7 +53,7 @@ def public_session(s):
     return {k:s[k] for k in fields} | {
         'node_index':course_for(s)['objectives'].index(focus), 'current_node':{
             'id':s['question_key'],'title':focus['title'],'kind':'question','prompt':'','code':''},
-        'camera_alerts':camera_alerts(s),'pending':bool(s['pending']),'title':s.get('custom_title') or course_for(s)['title'],'title_version':s.get('title_version',0),'total_steps':len(course_for(s)['objectives'])}
+        'language':s.get('language','zh-CN'),'camera_alerts':camera_alerts(s),'pending':bool(s['pending']),'title':s.get('custom_title') or course_for(s)['title'],'title_version':s.get('title_version',0),'total_steps':len(course_for(s)['objectives'])}
 
 
 def clear_unshown_episode(s):
@@ -99,7 +100,9 @@ def commit_dialogue(s, assessment, reply, state, event, text, record_user=True):
     """Only called after version/ownership/cancellation checks have passed."""
     old_focus=s['focus_id'];exercise=s.get('exercise');ev=assessment.evaluation
     if event=='message' and record_user: message(s,'user',text,'submitted')
-    elif event in ACTION_LABELS: message(s,'user',ACTION_LABELS[event],'command')
+    elif event in ACTION_LABELS:
+        labels=ACTION_LABELS_EN if s.get('language')=='en' else ACTION_LABELS
+        message(s,'user',labels[event],'command')
     if event=='message' and exercise:
         if ev.verdict=='supported' and not any(r.get('exercise_id')==exercise['id'] for r in s['records']):
             s['records'].append(dict(node_id=old_focus,exercise_id=exercise['id'],hints=s['hint_level'],

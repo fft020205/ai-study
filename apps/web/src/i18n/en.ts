@@ -181,6 +181,8 @@ export const en: TranslationShape<typeof zhCN> = {
     selfDetail: 'You said: “{{quote}}”', tagLabel: '{{label}}, {{source}}', tooltip: '{{source}}. {{detail}}'
   },
   errors: {
+    serverVersionOutdated: 'The learning service is out of date. Restart the project, then refresh this page.',
+    invalidRequest: 'Invalid request parameters. Please check and try again.',
     requestFailed: 'The request could not be completed. Please try again later.', operationFailed: 'The action could not be completed. Please try again.',
     operationIncomplete: 'The action was not completed. Please try again.',
     learningServiceOffline: 'The learning service is unavailable. Make sure the project is running, then try again.',

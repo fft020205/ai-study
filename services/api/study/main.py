@@ -124,7 +124,7 @@ def create_app(config=settings, repository=None, provider=None):
     @app.post('/api/sessions',status_code=201)
     def create(body: CreateSession,request:Request):
         if body.consent.camera and not body.consent.support: body.consent.camera=False
-        s=new_session(body.task_id,body.consent);repo.create(request.state.owner,s)
+        s=new_session(body.task_id,body.consent,body.language);repo.create(request.state.owner,s)
         return public_session(s)
 
     @app.get('/api/sessions/{sid}')
@@ -216,6 +216,7 @@ def create_app(config=settings, repository=None, provider=None):
             if running.get(sid) is this_task: running.pop(sid,None)
 
     def prepare(request,s,body,event):
+        if body.language is not None:s['language']=body.language
         v=s['version'];s['pending']=body.request_id;s['pending_event']=event;s['pending_base_version']=body.version
         if event=='support': s['auto_base_version']=v
         else: s.pop('auto_base_version',None)
@@ -248,7 +249,7 @@ def create_app(config=settings, repository=None, provider=None):
     @app.post('/api/sessions/{sid}/controls')
     async def control(sid:str,body:Control,request:Request):
         if body.action in AI_ACTIONS:
-            return await generate(request,sid,Answer(version=body.version,request_id=str(uuid.uuid4()),event=body.action))
+            return await generate(request,sid,Answer(version=body.version,request_id=str(uuid.uuid4()),event=body.action,language=body.language))
         # Safety controls are idempotent and valid even with a stale UI version.
         for _ in range(3):
             s=get(request,sid);v=s['version']
@@ -259,13 +260,14 @@ def create_app(config=settings, repository=None, provider=None):
             if body.version!=v and not priority and not pending_control and not automatic_control: raise Conflict()
             s.pop('auto_base_version',None)
             if s['status']=='ended': return public_session(s)
+            if body.language is not None:s['language']=body.language
             try: apply_control(s,body)
             except ValueError as exc: raise HTTPException(400,str(exc))
             try:
                 result=save(request,s,v);cancel(sid)
                 if body.action in ('end','pause','consent'):await vision.stop(request.state.owner,sid)
                 if body.action=='correct' and ai.provider.configured:
-                    return await generate(request,sid,Answer(text=body.text,version=s['version'],request_id=str(uuid.uuid4())),event='correct',client_version=body.version)
+                    return await generate(request,sid,Answer(text=body.text,version=s['version'],request_id=str(uuid.uuid4()),language=body.language),event='correct',client_version=body.version)
                 return result
             except Conflict:
                 if not priority: raise
@@ -376,6 +378,18 @@ def create_app(config=settings, repository=None, provider=None):
     @app.post('/api/sessions/{sid}/activity')
     async def activity(sid:str,body:Activity,request:Request):
         s=get(request,sid);now=time.time();activity_seen[sid]=now
+        # Persist the preference only against a current version. An ordinary reply
+        # keeps its language snapshot; a switch must not invalidate its stream.
+        if (body.language is not None and body.language!=s.get('language','zh-CN')
+            and body.version==s['version'] and s['status']=='active'
+            and (not s['pending'] or s.get('pending_event')=='support')):
+            was_support=s.get('pending_event')=='support'
+            if was_support:
+                s['pending']=None;s['pending_event']=None;clear_unshown_episode(s);cancel(sid)
+            s['language']=body.language
+            s.setdefault('auto_base_version',s['version'])
+            save(request,s,s['version']);body.version=s['version']
+            if was_support:return public_session(s)
         ready=vision.dialogue_ready(request.state.owner,s)
         inactive=body.has_draft or body.composing or body.busy or body.reading or not body.foreground or not ready
         if s.get('pending_event')=='support':

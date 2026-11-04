@@ -39,6 +39,10 @@ export function detectInitialLanguage(): Language {
   return defaultLanguage;
 }
 
+export function currentLanguage(): Language {
+  return normalizeLanguage(i18n.resolvedLanguage ?? i18n.language) ?? defaultLanguage;
+}
+
 export async function selectLanguage(language: Language) {
   try { window.localStorage.setItem(languageStorageKey, language); } catch { /* 隐私浏览等场景可能禁止本地存储。 */ }
   await i18n.changeLanguage(language);

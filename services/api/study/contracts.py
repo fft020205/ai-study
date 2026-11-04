@@ -4,11 +4,14 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 class Contract(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
+Language = Literal['zh-CN', 'en']
+
 class Consent(Contract):
     support: bool = False
     camera: bool = False
 
 class CreateSession(Contract):
+    language: Language = 'zh-CN'
     task_id: Literal['variable', 'mean', 'causality']
     consent: Consent = Field(default_factory=Consent)
 
@@ -24,6 +27,7 @@ class RenameSession(Contract):
         return value
 
 class Answer(Contract):
+    language: Language | None = None
     text: str = Field(default='', max_length=4000)
     event: Literal['message', 'open', 'hint', 'answer', 'continue', 'skip'] = 'message'
     version: int = Field(ge=0)
@@ -33,12 +37,14 @@ class StreamAnswer(Answer):
     event: Literal['message','open','hint','answer','continue','skip','correct'] = 'message'
 
 class Control(Contract):
+    language: Language | None = None
     action: Literal['open', 'hint', 'answer', 'continue', 'skip', 'think', 'reject', 'pause', 'resume', 'end', 'correct', 'consent']
     version: int = Field(ge=0)
     text: str = Field(default='', max_length=1000)
     consent: Consent | None = None
 
 class Activity(Contract):
+    language: Language | None = None
     version: int = Field(ge=0)
     # No draft text, keystroke detail, audio or landmarks in the telemetry contract.
     foreground: bool
