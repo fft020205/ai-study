@@ -4,11 +4,13 @@ import {useTranslation} from 'react-i18next';
 import {Button, Notice} from '@/components/ui';
 import {localizeError} from '@/i18n/errors';
 import {api} from '@/lib/api';
+import {useAuth} from '@/features/auth/AuthGate';
 import type {AIConnection, AIConnectionInput} from '@/lib/types';
 
 type Feedback = {kind:'success'|'error';text?:string;key?:string;values?:Record<string,string>};
 export function AIConnectionSettings({onBack,onConfigured}:{onBack?:()=>void;onConfigured?:()=>void}) {
-  const {t}=useTranslation();
+  const {t,i18n}=useTranslation();
+  const auth=useAuth();
   const [saved,setSaved]=useState<AIConnection|null>(null);
   const [provider,setProvider]=useState<'openai'|'none'>('openai');
   const [baseUrl,setBaseUrl]=useState('https://api.openai.com/v1');
@@ -18,6 +20,7 @@ export function AIConnectionSettings({onBack,onConfigured}:{onBack?:()=>void;onC
   const [feedback,setFeedback]=useState<Feedback|null>(null);
   const showError=(e:unknown)=>setFeedback({kind:'error',text:e instanceof Error?e.message:'操作未完成，请重试。'});
   useEffect(()=>{
+    if(!auth.aiSettingsEnabled)return;
     let active=true;
     api.aiConnection().then(value=>{
       if(!active)return;
@@ -26,7 +29,7 @@ export function AIConnectionSettings({onBack,onConfigured}:{onBack?:()=>void;onC
       if(value.load_error)setFeedback({kind:'error',key:'aiSettings.feedback.loadError'});
     }).catch(e=>{if(active)showError(e);}).finally(()=>{if(active)setLoading(false);});
     return()=>{active=false;};
-  },[]);
+  },[auth.aiSettingsEnabled]);
   const input=():AIConnectionInput=>({provider,base_url:baseUrl.trim(),model:model.trim(),
     ...(key.trim()?{api_key:key.trim()}:{}),timeout_seconds:Number(timeout)});
   const act=async(kind:'save'|'test',event?:FormEvent)=>{
@@ -43,6 +46,7 @@ export function AIConnectionSettings({onBack,onConfigured}:{onBack?:()=>void;onC
     }catch(e){showError(e);}finally{setWorking(null);}
   };
   const disabled=loading||working!==null||!saved;
+  if(!auth.aiSettingsEnabled)return <section className="content-page"><div className="readable stack-20"><h1>{t('common.aiSettings')}</h1><p>{i18n.language.startsWith('en')?'AI access is provided by the site owner. You do not need your own API key.':'AI 服务由站点统一提供，无需填写你自己的 API 密钥。'}</p>{onBack&&<Button onClick={onBack}>{t('common.back')}</Button>}</div></section>;
   return <section className="content-page ai-settings-page"><div className="readable stack-20">
     <p className="eyebrow">{t('aiSettings.eyebrow')}</p><h1>{t('aiSettings.title')}</h1>
     <p className="muted small">{t('aiSettings.description')}</p>

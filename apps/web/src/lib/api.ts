@@ -2,6 +2,7 @@ import {currentLanguage} from '@/i18n';
 import type { Action, DialogueEvent, Bootstrap, Consent, LearningSession, AIConnection, AIConnectionInput, AIConnectionTest, SessionTitle } from './types';
 export class ApiError extends Error { constructor(message:string, public status:number){super(message);} }
 export async function responseError(response:Response, fallback='请求未完成，请稍后重试。'):Promise<ApiError> {
+  if(response.status===401&&typeof window!=='undefined')window.dispatchEvent(new Event('study-auth-required'));
   const body=await response.json().catch(()=>null),detail=body?.detail;
   if(typeof detail==='string')return new ApiError(detail,response.status);
   if(response.status===422){

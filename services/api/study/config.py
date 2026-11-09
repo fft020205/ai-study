@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     database_url: str = 'sqlite:///./data/study.db'
     allowed_origins: str = 'http://localhost:3000,http://127.0.0.1:3000'
     cookie_secure: bool = False
+    auth_required: bool = False
+    registration_enabled: bool = True
+    ai_daily_calls_per_user: int = Field(default=100, ge=1)
+    ai_daily_calls_total: int = Field(default=1000, ge=1)
     vision_enabled: bool = True
     vision_calibration_cache_seconds: int = Field(default=900,ge=0,le=900)
     support_wait_seconds: int = 30

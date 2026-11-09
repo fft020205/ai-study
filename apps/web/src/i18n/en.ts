@@ -60,6 +60,7 @@ export const en: TranslationShape<typeof zhCN> = {
     }
   },
   consent: {
+    hostedStartTitle: 'Learning preferences', hostedCameraData: 'Video and facial landmarks stay in your browser. Derived blink, gaze, and head movement features are sent to the site backend; a valid summary is shared with the AI service.',
     editable: 'Change anytime', beforeStart: 'Before you start · About 1 minute', settingsTitle: 'Learning Settings',
     startTitle: 'Monitoring & API', settingsDescription: 'You can continue learning with either option turned off.',
     selected: 'Selected: {{title}} · About 8–10 minutes. Both options are off by default and can be changed anytime.',
@@ -141,6 +142,9 @@ export const en: TranslationShape<typeof zhCN> = {
     home: 'Back to tasks', export: 'Export this record', privacy: 'View this session’s data and deletion options'
   },
   privacy: {
+    hostedTextBody: 'Submitted text and learning records are stored on the site server, scoped to your account, and available when you sign in on another device. Drafts stay in this page’s memory and clear when you refresh or leave. Sign out after using a shared device.',
+    hostedCameraBody: 'Video and facial landmarks stay in your browser and are not transmitted or saved. Derived blink, gaze, and head movement features are encrypted in transit to the site backend for in-memory behavioral analysis. A valid state summary is shared with the site’s AI provider. These cues are not emotional or psychological diagnoses. Turning off the camera, moving to the background, signing out, or ending learning stops collection and closes the connection.',
+    hostedAiBody: 'Submitted text, recent conversations, the current exercise, and evidence-based self-reports are sent to the site’s AI provider. With the camera enabled, this also includes the current valid behavioral summary. Site learning records remain until you delete them. The AI provider sets its own retention and training policies.',
     eyebrow: 'You are in control', title: 'Privacy & Data', textTitle: 'Text and learning records',
     textBody: 'Only text you click to send enters the product service. Drafts stay in the current page’s memory and are cleared when you refresh or leave. Guest identities are distinguished by browser cookies; do not share the same browser profile on a public device.',
     cameraTitle: 'Camera',

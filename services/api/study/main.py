@@ -22,11 +22,15 @@ from .learning import new_session, public_session, apply_control, message, ensur
 from .stream_response import ManagedStreamResponse
 from .vision import VisionService, VisionPacket, VisionRejected, VisionSampleRejected, VisionUnavailable, CalibrationRequired, permitted
 from .ai import make_provider, TeachingService, AIUnavailable, AIProtocolError
+from .accounts import Accounts, Credentials, LimitedProvider, QuotaExceeded, current_owner, COOKIE, SESSION_SECONDS
 
 def create_app(config=settings, repository=None, provider=None):
     repo=repository or Repository(config.database_url)
+    accounts=Accounts(repo.engine,config) if config.auth_required else None
     connection=AIConnection(config, load_saved=provider is None)
-    ai=TeachingService(provider or make_provider(connection.current))
+    def protect_provider(value):
+        return LimitedProvider(value,accounts) if accounts else value
+    ai=TeachingService(protect_provider(provider or make_provider(connection.current)))
     policy=SupportPolicy(config)
     vision=VisionService(config.vision_enabled,calibration_cache_seconds=config.vision_calibration_cache_seconds)
     running={}
@@ -48,7 +52,9 @@ def create_app(config=settings, repository=None, provider=None):
             for owner,sid in list(vision.runs):await vision.stop(owner,sid)
             vision.calibrations.entries.clear()
 
-    app=FastAPI(title='AI Study Product API',version='0.2.0',lifespan=lifespan)
+    app=FastAPI(title='AI Study Product API',version='0.3.0',lifespan=lifespan,
+                docs_url=None if accounts else '/docs', redoc_url=None if accounts else '/redoc',
+                openapi_url=None if accounts else '/openapi.json')
     app.state.repo=repo;app.state.policy=policy;app.state.vision=vision
     app.state.ai_connection=connection
 
@@ -59,7 +65,7 @@ def create_app(config=settings, repository=None, provider=None):
             forwarded = request.headers.get('x-forwarded-for', '').split(',')
             allowed = {o.strip() for o in config.allowed_origins.split(',')}
             local_origin = not origin or (origin in allowed and is_loopback(urlsplit(origin).hostname))
-            if (not config.ai_settings_enabled or not request.client or not is_loopback(request.client.host)
+            if (not config.ai_settings_enabled or config.auth_required or not request.client or not is_loopback(request.client.host)
                 or not is_loopback(request.url.hostname) or not local_origin
                 or any(ip.strip() and not is_loopback(ip.strip()) for ip in forwarded)
                 or request.headers.get('x-study-client') != 'web-v1'):
@@ -67,26 +73,87 @@ def create_app(config=settings, repository=None, provider=None):
         if request.method not in ('GET','HEAD','OPTIONS'):
             if request.headers.get('x-study-client')!='web-v1' or (origin and origin not in config.allowed_origins.split(',')):
                 return JSONResponse({'detail':'请求来源无效。'},status_code=403)
-        token=request.cookies.get('study_identity')
-        fresh=not token or len(token)!=64
-        if fresh: token=secrets.token_hex(32)
-        request.state.owner=hashlib.sha256(token.encode()).hexdigest()
-        result=await call_next(request)
+        fresh=False
+        if accounts:
+            user=accounts.user(request.cookies.get(COOKIE))
+            public=request.url.path in ('/api/health','/api/auth/config','/api/auth/me','/api/auth/login','/api/auth/register','/api/auth/logout')
+            if not user and not public:
+                return JSONResponse({'detail':'请先登录，再开始学习。'},status_code=401,headers={'Cache-Control':'no-store'})
+            request.state.user=user
+            request.state.owner=user['id'] if user else None
+        else:
+            token=request.cookies.get('study_identity')
+            fresh=not token or len(token)!=64
+            if fresh: token=secrets.token_hex(32)
+            request.state.owner=hashlib.sha256(token.encode()).hexdigest()
+        context=current_owner.set(request.state.owner)
+        try:
+            result=await call_next(request)
+        finally:
+            current_owner.reset(context)
         if fresh: result.set_cookie('study_identity',token,max_age=60*60*24*30,httponly=True,secure=config.cookie_secure,samesite='strict')
         result.headers['Cache-Control']='no-store, no-transform' if result.headers.get('content-type','').startswith('text/event-stream') else 'no-store'
         return result
 
     @app.exception_handler(RequestValidationError)
     async def validation(request, exc):
-        if request.url.path.startswith('/api/settings/ai'):
+        if request.url.path.startswith(('/api/settings/ai','/api/auth/')):
             # Validation inputs may contain a key; never return Pydantic's input field.
-            return JSONResponse({'detail':'配置格式无效，请检查地址、密钥、模型名和超时（1–120秒）。'},status_code=422)
+            detail='用户名需为3–64位英文、数字、点、横线或下划线，密码需为12–128位。' if request.url.path.startswith('/api/auth/') else '配置格式无效，请检查地址、密钥、模型名和超时（1–120秒）。'
+            return JSONResponse({'detail':detail},status_code=422)
         from fastapi.exception_handlers import request_validation_exception_handler
         return await request_validation_exception_handler(request,exc)
 
     @app.exception_handler(ConnectionSettingsError)
     async def connection_error(request, exc):
         return JSONResponse({'detail':str(exc)},status_code=400)
+
+    @app.get('/api/auth/config')
+    def auth_config():
+        return {'required':config.auth_required,'registration_enabled':config.registration_enabled,
+                'ai_settings_enabled':config.ai_settings_enabled and not config.auth_required}
+
+    @app.get('/api/auth/me')
+    def auth_me(request:Request):
+        return {'user':getattr(request.state,'user',None)}
+
+    def auth_result(user,request):
+        token=accounts.start(user,request.cookies.get(COOKIE))
+        response=JSONResponse({'user':user})
+        response.set_cookie(COOKIE,token,max_age=SESSION_SECONDS,httponly=True,
+                            secure=config.cookie_secure,samesite='strict',path='/')
+        return response
+
+    def auth_rate(body):
+        if not accounts:raise HTTPException(404,'未启用账号登录。')
+        accounts.throttle('global-auth',120,60)
+        accounts.throttle('account:'+body.username,10,900)
+
+    @app.post('/api/auth/register',status_code=201)
+    def auth_register(body:Credentials,request:Request):
+        auth_rate(body)
+        accounts.throttle('global-register',10,3600)
+        response=auth_result(accounts.register(body),request)
+        response.status_code=201
+        return response
+
+    @app.post('/api/auth/login')
+    def auth_login(body:Credentials,request:Request):
+        auth_rate(body)
+        return auth_result(accounts.login(body),request)
+
+    @app.post('/api/auth/logout')
+    async def auth_logout(request:Request):
+        if accounts:
+            accounts.logout(request.cookies.get(COOKIE))
+            owner=request.state.owner
+            if owner:
+                for session in repo.list(owner):
+                    cancel(session['id'])
+                    await vision.stop(owner,session['id'])
+        result=JSONResponse({'ok':True})
+        result.delete_cookie(COOKIE,path='/',secure=config.cookie_secure,httponly=True,samesite='strict')
+        return result
 
     @app.get('/api/settings/ai', tags=['AI 接口设置'])
     def read_ai_connection():
@@ -96,7 +163,7 @@ def create_app(config=settings, repository=None, provider=None):
     async def save_ai_connection(body: AIConnectionUpdate):
         nonlocal ai
         replacement=await connection.save(body)
-        ai=TeachingService(replacement)
+        ai=TeachingService(protect_provider(replacement))
         return connection.public()
 
     @app.post('/api/settings/ai/test', tags=['AI 接口设置'])
@@ -219,7 +286,7 @@ def create_app(config=settings, repository=None, provider=None):
                 if event=='support':clear_unshown_episode(current)
                 save(request,current,v)
             if event=='support': return None  # No canned fallback for failed automatic support.
-            raise HTTPException(502,str(exc) if isinstance(exc,(AIUnavailable,AIProtocolError)) else 'AI 返回格式不正确，输入已保留。')
+            raise HTTPException(429 if isinstance(exc,QuotaExceeded) else 502,str(exc) if isinstance(exc,(AIUnavailable,AIProtocolError)) else 'AI 返回格式不正确，输入已保留。')
         except (Conflict,Missing):
             if event=='support': return None
             raise
@@ -442,10 +509,11 @@ def create_app(config=settings, repository=None, provider=None):
     @app.websocket('/api/sessions/{sid}/vision/ws')
     async def vision_socket(websocket:WebSocket,sid:str):
         origin=websocket.headers.get('origin')
-        cookie=websocket.cookies.get('study_identity','')
-        if origin not in config.allowed_origins.split(',') or len(cookie)!=64:
+        cookie=websocket.cookies.get(COOKIE if accounts else 'study_identity','')
+        user=accounts.user(cookie) if accounts else None
+        if origin not in config.allowed_origins.split(',') or len(cookie)!=64 or (accounts and not user):
             await websocket.close(code=4403);return
-        owner=hashlib.sha256(cookie.encode()).hexdigest();run=None;retain_calibration=True
+        owner=user['id'] if accounts else hashlib.sha256(cookie.encode()).hexdigest();run=None;retain_calibration=True
         try:
             s=repo.get(owner,sid)
             if not permitted(s):raise VisionRejected('视觉授权无效。')
@@ -457,6 +525,7 @@ def create_app(config=settings, repository=None, provider=None):
             run=vision.attach(owner,s,hello['ticket'],websocket)
             await websocket.send_json({'type':'connected','data':vision.project(owner,run,s)})
             while True:
+                if accounts and not accounts.user(cookie):raise VisionRejected('登录已失效。')
                 try:raw=await asyncio.wait_for(websocket.receive_text(),1.5)
                 except TimeoutError:
                     s=repo.get(owner,sid);vision.current(owner,s,run.run_id)

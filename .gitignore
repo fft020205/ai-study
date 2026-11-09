@@ -22,3 +22,9 @@ qa/
 
 # Reproducible model/WASM downloads (scripts/vision-assets.mjs + lock file)
 apps/web/public/vision/
+
+# Local deployment identity and progress
+.deployment/
+
+# Also ignore a symlink to a cached local Python environment
+.venv

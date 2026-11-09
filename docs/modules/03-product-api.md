@@ -88,6 +88,11 @@ camera=true 时生成入口要求当前 owner/session/consent 的视觉 run 已�
 
 `lib/api.ts` 的responseError由普通JSON与SSE入口共享。服务端detail字符串按原合同显示；422校验数组不再统一回落为模糊失败：body.language的extra_forbidden说明API进程未更新，提示重启项目并刷新；其他422给出参数无效提示。仅检查错误类型及字段位置，不显示校验对象中的input或原始请求。界面通过现有错误翻译映射显示中英文。
 
+
+## 独立云端部署副本
+
+托管副本启用AUTH_REQUIRED时，服务端账号替代浏览器访客owner；新增auth接口，HTTP与WS均检查登录，详情见19-hosted-deployment.md。
+
 ## 暂时离开与校准恢复（2026-11-09）
 
 controls.action新增suspend：接受优先取消，停视觉、保留consent/support_mode/当前学习位置与已显示卡片，供站内导航使用；原pause仍表示明确暂停支持。vision/start新增可选VisionStart(device_key,reset)，新run可以复用服务端短期参考但仍须有效复核。OpenAPI同步，详细时效和字段见[模块18](18-calibration-reuse.md)。

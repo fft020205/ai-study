@@ -5,8 +5,10 @@ import {LanguageSwitcher} from './LanguageSwitcher';
 import {HistoryList} from '@/features/history/HistoryList';
 import {localizeSessionTitle} from '@/i18n/course';
 import type {LearningSession} from '@/lib/types';
+import {useAuth} from '@/features/auth/AuthGate';
 export function Shell({children,sessions,current,onNew,onOpen,onRename,onDelete,onAISettings,onPrivacy,onEnd,cameraLive}:{children:React.ReactNode;sessions:LearningSession[];current:LearningSession|null;onNew:()=>void;onOpen:(s:LearningSession)=>void;onRename:(s:LearningSession)=>void;onDelete:(s:LearningSession)=>void;onAISettings:()=>void;onPrivacy:()=>void;onEnd:()=>void;cameraLive:boolean}){
-  const {t}=useTranslation();
+  const {t,i18n}=useTranslation();
+  const auth=useAuth();
   const [nav,setNav]=useState(false),[menu,setMenu]=useState(false);const menuRef=useRef<HTMLDivElement>(null);
   useEffect(()=>{const close=(e:PointerEvent)=>{if(menuRef.current&&!menuRef.current.contains(e.target as Node))setMenu(false);};const escape=(e:KeyboardEvent)=>{if(e.key==='Escape'){setMenu(false);setNav(false);}};document.addEventListener('pointerdown',close);document.addEventListener('keydown',escape);return()=>{document.removeEventListener('pointerdown',close);document.removeEventListener('keydown',escape);};},[]);
   const supportStatus=current?.support_mode==='on'?'supportOn':current?.support_mode==='paused'?'supportPaused':'supportOff';
@@ -23,7 +25,7 @@ export function Shell({children,sessions,current,onNew,onOpen,onRename,onDelete,
     <main className="workspace">
       <header className="header"><button className="menu-trigger" aria-label={t('shell.openNavigation')} onClick={()=>setNav(!nav)}><Icon name="menu"/></button><div className="breadcrumb">{current&&<><span>{localizeSessionTitle(current)}</span><span className="muted">/</span><span className="muted breadcrumb-detail">{t(`shell.breadcrumb.${current.task_id}`)}</span></>}</div>
         <LanguageSwitcher/>
-        <div className="account" ref={menuRef}><button className="avatar-trigger" aria-label={t('shell.openAccount')} aria-expanded={menu} onClick={()=>setMenu(!menu)}><span>{t('shell.avatar')}</span></button>{menu&&<div className="account-menu"><span className="caption">{t('shell.guest')}</span><button onClick={()=>{setMenu(false);onAISettings();}}>{t('common.aiSettings')}</button><button onClick={()=>{setMenu(false);onPrivacy();}}>{t('common.privacy')}</button>{current?.status==='active'&&<button onClick={()=>{setMenu(false);onEnd();}}>{t('shell.endSession')}</button>}</div>}</div>
+        <div className="account" ref={menuRef}><button className="avatar-trigger" aria-label={t('shell.openAccount')} aria-expanded={menu} onClick={()=>setMenu(!menu)}><span>{auth.user?auth.user.username.slice(0,1).toUpperCase():t('shell.avatar')}</span></button>{menu&&<div className="account-menu"><span className="caption">{auth.user?.username||t('shell.guest')}</span>{auth.aiSettingsEnabled&&<button onClick={()=>{setMenu(false);onAISettings();}}>{t('common.aiSettings')}</button>}<button onClick={()=>{setMenu(false);onPrivacy();}}>{t('common.privacy')}</button>{auth.required&&<button onClick={()=>{void auth.logout().catch(()=>window.location.reload());}}>{i18n.language.startsWith('en')?'Sign out':'退出登录'}</button>}{current?.status==='active'&&<button onClick={()=>{setMenu(false);onEnd();}}>{t('shell.endSession')}</button>}</div>}</div>
       </header>{children}
     </main>
   </div>;

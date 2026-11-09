@@ -20,6 +20,7 @@ import {useActivity} from '@/features/learning/useActivity';
 import {courseTitle,localizeSessionTitle} from '@/i18n/course';
 import {localizeError} from '@/i18n/errors';
 import {api} from '@/lib/api';
+import {useAuth} from '@/features/auth/AuthGate';
 import {readTurnStream} from '@/lib/turnStream';
 import type {ActiveTurn} from '@/features/learning/activeTurn';
 import type {Action,DialogueEvent,StreamEvent,Bootstrap,Consent,LearningSession,Task} from '@/lib/types';
@@ -27,6 +28,7 @@ import type {Action,DialogueEvent,StreamEvent,Bootstrap,Consent,LearningSession,
 type View='tasks'|'consent'|'learning'|'settings'|'ai-settings'|'privacy';
 export default function Home(){
   const {t}=useTranslation();
+  const auth=useAuth();
   const [data,setData]=useState<Bootstrap|null>(null),[session,setSession]=useState<LearningSession|null>(null),[selected,setSelected]=useState<Task|null>(null),[view,setView]=useState<View>('tasks');
   const [draft,setDraft]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[composing,setComposing]=useState(false),[reading,setReading]=useState(false),[cameraLive,setCameraLive]=useState(false),[collapseSignal,setCollapseSignal]=useState(0);
   const [correction,setCorrection]=useState<string|null>(null),[historyAction,setHistoryAction]=useState<HistoryAction|null>(null);
@@ -153,7 +155,7 @@ export default function Home(){
         </>}
         {camera}
       </>)}
-      {view==='privacy'&&<section className="content-page"><div className="readable stack-20"><p className="eyebrow">{t('privacy.eyebrow')}</p><h1>{t('privacy.title')}</h1><div className="info-block"><strong>{t('privacy.textTitle')}</strong><p>{t('privacy.textBody')}</p></div><div className="info-block"><strong>{t('privacy.cameraTitle')}</strong><p>{t('privacy.cameraBody')}</p></div><div className="info-block"><strong>{t('privacy.aiTitle')}</strong><p>{t('privacy.aiBody')}</p></div><div className="actions"><Button onClick={()=>setView(session?'learning':'tasks')}>{t('common.back')}</Button>{session&&<><a className="button secondary" href={`/api/sessions/${session.id}/export`} download>{t('privacy.export')}</a><Button variant="ghost" onClick={()=>setHistoryAction({mode:'delete',session})}>{t('privacy.delete')}</Button></>}</div><p className="caption muted">{t('privacy.deletionNote')}</p></div></section>}
+      {view==='privacy'&&<section className="content-page"><div className="readable stack-20"><p className="eyebrow">{t('privacy.eyebrow')}</p><h1>{t('privacy.title')}</h1><div className="info-block"><strong>{t('privacy.textTitle')}</strong><p>{t(auth.required?'privacy.hostedTextBody':'privacy.textBody')}</p></div><div className="info-block"><strong>{t('privacy.cameraTitle')}</strong><p>{t(auth.required?'privacy.hostedCameraBody':'privacy.cameraBody')}</p></div><div className="info-block"><strong>{t('privacy.aiTitle')}</strong><p>{t(auth.required?'privacy.hostedAiBody':'privacy.aiBody')}</p></div><div className="actions"><Button onClick={()=>setView(session?'learning':'tasks')}>{t('common.back')}</Button>{session&&<><a className="button secondary" href={`/api/sessions/${session.id}/export`} download>{t('privacy.export')}</a><Button variant="ghost" onClick={()=>setHistoryAction({mode:'delete',session})}>{t('privacy.delete')}</Button></>}</div><p className="caption muted">{t('privacy.deletionNote')}</p></div></section>}
     </>}
     {correction!==null&&<Dialog titleId="correction-title" onClose={()=>setCorrection(null)}><h2 id="correction-title">{t('correction.title')}</h2><p className="muted">{t('correction.description')}</p><textarea autoFocus aria-label={t('correction.label')} value={correction} maxLength={1000} onChange={e=>setCorrection(e.target.value)} placeholder={t('correction.placeholder')}/><div className="actions"><Button variant="primary" disabled={!correction.trim()} onClick={()=>{const text=correction;setCorrection(null);void control('correct',{text});}}>{t('correction.confirm')}</Button><Button onClick={()=>setCorrection(null)}>{t('common.back')}</Button></div></Dialog>}
     {historyAction&&<SessionHistoryDialog key={historyAction.mode+historyAction.session.id} action={historyAction} onClose={()=>setHistoryAction(null)} onRenamed={title=>{

@@ -72,3 +72,7 @@ start响应新增 `calibration_mode=full/resume/continued`；`calibration_second
 - 完成参考绑定consent_key与last_valid_at，容量和清除规则保持。若浏览器不提供设备ID，用WeakMap中的随机流键匹配同一MediaStream；新媒体流生成新键，不能跨未知设备复用。
 
 page.camera.test.tsx渲染真实Home/CameraPreview/useVisualAnalysis，用测试媒体/WS/Provider模拟“已发回答→WS断线→后台复核→回复完成”，确认输入节点、新草稿和流式任务保留，getUserMedia只调用1次。后端真实引擎/WS测试迟到及拥堵帧后同run可继续回答；评分中断线时第二阶段收到不可用视觉并正常完成。首次/明确重校/撤权/其他归属仍有独立回归。
+
+## 托管登录兼容
+
+Railway部署版的缓存owner来自服务端登录账号，而非匿名访客Cookie。校准WS继续验证登录与会话归属；suspend可保留同一账号/课程/设备的参考，退出登录清理该账号内存参考。合并验证与部署边界见[模块19](19-hosted-deployment.md)。

@@ -45,3 +45,8 @@ SSE新增submitted_requests（最近100个请求的指纹/message_id）和Messag
 新记录与自动名称在同一事务创建，编号采用原子 upsert/returning，遇到现有同名手动标题会跳号。自动标题版本0，实际重命名独立递增。删除会话保留纯编号计数以避免序号回退，既有记录不重新编号。旧记录补号按创建时间和id稳定分配，只更新显示元数据；详细合同和已验证 SQLite 并发范围见模块14。
 
 支持卡额度新增私有 support_round={turn,states,attempts}，惰性保存在原会话JSON，无迁移。以dialogue_turn界定一轮，正常回复完成后逻辑重置，支持生成不推进轮次。旧episodes_count仍可审计但不设会话总限额；计数和尝试记录不进入public session/export，完整规则见模块05。
+
+
+## 独立云端部署副本
+
+托管副本新增accounts/account_logins/account_auth_attempts/account_daily_usage表。学习表结构不变，新账号不继承旧访客数据。数据库位于持久卷/data/study.db，详情见19-hosted-deployment.md。
