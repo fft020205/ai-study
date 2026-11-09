@@ -1,6 +1,6 @@
 {
-  "github_commit": "7007058d58ab506b2ebc7533d43aaf61a457ec34",
-  "release_branch": "railway-production",
-  "previous_deployment_id": "e6eb50af-0cbb-4a63-bbc1-984e620dbdaa",
+  "github_commit": "16d1e4e94e83a6249dd881ecd61b61c04760660b",
+  "release_branch": "main",
+  "previous_deployment_id": "bf8faf38-637e-4be3-8cc1-13b9bf064713",
   "source_mode": "github_branch"
 }

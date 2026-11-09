@@ -1,10 +1,10 @@
 # 模块开发索引
 
-状态：本分支为 Railway 生产部署版本，包含账号、调用限额和托管运行配置；本地默认仍是匿名 MVP。线上由平台变量配置真实 AI。权威范围以 `README.md` 和本文件为准，原方案中的 PostgreSQL/Redis/研究/声学并不都属于本轮实现。
+状态：统一主线 `main` 同时用于本地开发与 Railway 部署，包含账号、调用限额和托管运行配置；本地默认仍是匿名 MVP。线上由平台变量配置真实 AI。权威范围以 `README.md` 和本文件为准，原方案中的 PostgreSQL/Redis/研究/声学并不都属于本轮实现。
 
 | 模块 | 代码边界 | 说明 |
 |---|---|---|
-| 账号与云端部署（生产分支） | `accounts.py`、`features/auth`、`deploy` | [19-hosted-deployment.md](modules/19-hosted-deployment.md) |
+| 账号与云端部署 | `accounts.py`、`features/auth`、`deploy` | [19-hosted-deployment.md](modules/19-hosted-deployment.md) |
 | 短时切页与校准复用 | `vision_calibration.py`、`cameraDeviceKey.ts`、`suspend` | [18-calibration-reuse.md](modules/18-calibration-reuse.md) |
 | 对话前校准准备 | `lessonReadiness.ts`、`LessonPreparation.tsx`、`VisionService.dialogue_ready` | [16-lesson-preparation.md](modules/16-lesson-preparation.md) |
 | 即时消息与流式回复 | `study/stream_protocol.py`、`stream_response.py`、`lib/turnStream.ts` | [15-streaming-dialogue.md](modules/15-streaming-dialogue.md) |
@@ -45,5 +45,5 @@
 1. 在页面“AI 接口设置”中接入真实模型，拿三套题与反例评估中文判断、格式、成本和延迟。
 2. 若必须以 DeepTutor 承载教学，部署固定版本及关闭工具的独立 scope，并进行真实认证/取消测试；再考虑受控 capability 与 RAG。
 3. 真机验证摄像头（权限拒绝、多人、弱光、后台、移动端）；再研究信号能否帮助任务，不能把检测成功当作情绪有效性。
-4. 生产分支已含账号、调用限额和 HTTPS；扩大试用前补密码恢复与卷备份验证。扩容前迁移共享状态并评估 PostgreSQL，不能直接增加副本或 worker。
+4. 主线已含账号、调用限额和 HTTPS；扩大试用前补密码恢复与卷备份验证。扩容前迁移共享状态并评估 PostgreSQL，不能直接增加副本或 worker。
 5. 有明确模型与授权方案后再加入 ASR、声学、融合或研究模块。

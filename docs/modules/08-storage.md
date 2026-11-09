@@ -47,6 +47,6 @@ SSE新增submitted_requests（最近100个请求的指纹/message_id）和Messag
 支持卡额度新增私有 support_round={turn,states,attempts}，惰性保存在原会话JSON，无迁移。以dialogue_turn界定一轮，正常回复完成后逻辑重置，支持生成不推进轮次。旧episodes_count仍可审计但不设会话总限额；计数和尝试记录不进入public session/export，完整规则见模块05。
 
 
-## 独立云端部署副本
+## 云端运行模式
 
-托管副本新增accounts/account_logins/account_auth_attempts/account_daily_usage表。学习表结构不变，新账号不继承旧访客数据。数据库位于持久卷/data/study.db，详情见19-hosted-deployment.md。
+托管模式新增accounts/account_logins/account_auth_attempts/account_daily_usage表。学习表结构不变，新账号不继承旧访客数据。数据库位于持久卷/data/study.db，详情见19-hosted-deployment.md。

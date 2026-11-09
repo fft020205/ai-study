@@ -1,6 +1,6 @@
 # 19 · 账号登录和云端部署
 
-适用于 `railway-production` 生产分支；`main` 保留本地默认匿名模式。本机数据库不上传，线上沿用 Railway `/data` 卷。线上地址：https://ai-study-production.up.railway.app 。
+适用于统一主线 `main`。Railway 直接部署该主线；本地默认匿名模式和托管账号模式由运行配置区分。本机数据库不上传，线上沿用 Railway `/data` 卷。线上地址：https://ai-study-production.up.railway.app 。
 
 ## 文件和边界
 
@@ -45,3 +45,7 @@
 本次合入主线 `7007058`，保留账号归属、每日调用额度、安全 Cookie、同源代理和单 worker。迟到视觉包只丢弃该包，连接重试保留同授权的完整校准参考；服务端 `lesson_ready` 允许已准备课程继续文字交流，但断线时传给模型的视觉摘要仍为不可用。退出仍撤销连接并清空该账号的视觉参考。完整协议与复用期限见[模块18](18-calibration-reuse.md)。
 
 本次不修改数据库表结构，不迁移 `/data`，不覆盖秘密变量。本次发布前通过224项后端测试、64项前端测试、TypeScript、视觉资源校验和Next生产构建。未进行实体摄像头或真实模型调用的本次端到端验证；发布状态以Railway健康检查与部署元数据为准，合入来源见 `deploy/release.json`。
+
+## 统一主线发布
+
+账号、限额、Docker与校准修复均合入 `main`，Railway 的 GitHub 来源固定为 `fft020205/ai-study` 的 `main`，不设置固定提交、不维护部署专用分支。后续直接提交到主线触发自动部署；本地 `.env`、`data/` 与平台秘密变量仍不提交。此调整只统一源码和部署来源，继续使用原服务、账号权限、单 worker 和 `/data` 卷。

@@ -63,9 +63,9 @@ apps/web/public/vision/ 是可重建的模型/WASM下载目录，不加入Git；
 新增运行参数不会自动改变已经启动的旧进程；首次采用本次脚本需重启npm run dev。当前端遇到旧API拒绝language字段时，显示明确的重启提示，JSON与SSE一致；不回显422中的input或完整校验对象。
 
 
-## 独立云端部署副本
+## 云端运行模式
 
-托管副本提供Dockerfile、Railway配置与deploy/start.py，线上固定单副本、单API worker、HTTPS、持久卷与登录。构建和平台发布边界见deploy/README.md与19-hosted-deployment.md。
+托管模式提供Dockerfile、Railway配置与deploy/start.py，线上固定单副本、单API worker、HTTPS、持久卷与登录。构建和平台发布边界见deploy/README.md与19-hosted-deployment.md。
 
 ## 校准参考配置（2026-11-09）
 
