@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     allowed_origins: str = 'http://localhost:3000,http://127.0.0.1:3000'
     cookie_secure: bool = False
     vision_enabled: bool = True
+    vision_calibration_cache_seconds: int = Field(default=900,ge=0,le=900)
     support_wait_seconds: int = 30
     support_max_states_per_turn: int = Field(default=3,ge=1,le=3)
     support_retry_seconds: int = 30

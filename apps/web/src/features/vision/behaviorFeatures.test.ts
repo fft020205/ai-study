@@ -13,10 +13,10 @@ describe('upstream-derived visual geometry',()=>{
   it('tracks blink hysteresis, gaze ratio and real head movement',()=>{
     const e=new BehaviorFeatureExtractor();
     const normal=e.extract(points(),0,640,480)!;expect(normal.blink_rate).toBe(0);expect(normal.gaze_deviation).toBeCloseTo(.05);expect(normal.head_jitter).toBe(0);
-    expect(e.extract(points(true),100,640,480)!.blink_rate).toBe(1);
-    expect(e.extract(points(true),150,640,480)!.blink_rate).toBe(1);
+    expect(e.extract(points(true),100,640,480)!.blink_rate).toBe(60);
+    expect(e.extract(points(true),150,640,480)!.blink_rate).toBe(60);
     e.extract(points(),200,640,480);
-    expect(e.extract(points(true),300,640,480)!.blink_rate).toBe(2);
+    expect(e.extract(points(true),300,640,480)!.blink_rate).toBe(120);
     const moved=points();moved[1]={x:.51,y:.5};expect(e.extract(moved,400,640,480)!.head_jitter).toBeCloseTo(.01);
   });
   it('expires old blink events and resets motion after invalid frames',()=>{
@@ -32,4 +32,19 @@ describe('upstream-derived visual geometry',()=>{
     expect(visualObservationCurrent({...o,calibrated:false},102)).toBe(false);
     expect(visualObservationCurrent({...o,valid:false},102)).toBe(false);
   });
+});
+
+
+it('normalizes short-window blinks by observed time and excludes unobserved gaps',()=>{
+ const e=new BehaviorFeatureExtractor();let value;
+ for(let at=0;at<=5000;at+=100)value=e.extract(points(at===1000),at,640,480)!;
+ expect(e.observedSeconds).toBeCloseTo(5);expect(value!.blink_rate).toBeCloseTo(12);
+ e.invalidate();e.extract(points(),10000,640,480);
+ value=e.extract(points(true),11000,640,480)!;
+ expect(e.observedSeconds).toBeCloseTo(6);expect(value.blink_rate).toBeCloseTo(20);
+});
+it('uses a bounded rolling minute once observations mature',()=>{
+ const e=new BehaviorFeatureExtractor();let value;
+ for(let at=0;at<=65000;at+=100)value=e.extract(points(at>0&&at%5000===0),at,640,480)!;
+ expect(e.observedSeconds).toBeCloseTo(60);expect(value!.blink_rate).toBeCloseTo(12);
 });

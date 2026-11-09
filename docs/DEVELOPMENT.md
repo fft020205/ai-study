@@ -4,6 +4,7 @@
 
 | 模块 | 代码边界 | 说明 |
 |---|---|---|
+| 短时切页与校准复用 | `vision_calibration.py`、`cameraDeviceKey.ts`、`suspend` | [18-calibration-reuse.md](modules/18-calibration-reuse.md) |
 | 对话前校准准备 | `lessonReadiness.ts`、`LessonPreparation.tsx`、`VisionService.dialogue_ready` | [16-lesson-preparation.md](modules/16-lesson-preparation.md) |
 | 即时消息与流式回复 | `study/stream_protocol.py`、`stream_response.py`、`lib/turnStream.ts` | [15-streaming-dialogue.md](modules/15-streaming-dialogue.md) |
 | 历史名称与删除 | `features/history`、`study/storage.py` | [14-session-history.md](modules/14-session-history.md) |

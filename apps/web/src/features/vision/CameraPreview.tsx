@@ -6,6 +6,7 @@ import {FloatingCamera,CameraDragHandle} from './FloatingCamera';
 import {VisionPreparationStatus} from './VisionPreparationStatus';
 import {initialPreparation,preparationTransition,type VisionPreparation} from './visionPreparation';
 import {useVisualAnalysis} from './useVisualAnalysis';
+import {cameraDeviceKey} from './cameraDeviceKey';
 import {VisualAnalysisStatus} from './VisualAnalysisStatus';
 import {visualObservationCurrent,type CameraAnalysisState} from './visualAnalysis';
 import {CameraStatusWarning} from './CameraStatusWarning';
@@ -17,17 +18,20 @@ export function CameraPreview({allowed,collapseSignal,onOpen,onClose,onLive,aler
   const video=useRef<HTMLVideoElement>(null),stream=useRef<MediaStream|null>(null),generation=useRef(0),disposeResources=useRef<(()=>void)|null>(null);
   const [opening,setOpening]=useState(false),[closing,setClosing]=useState(false),[locallyClosed,setLocallyClosed]=useState(false),[request,setRequest]=useState(0),[collapsed,setCollapsed]=useState(false),[state,setState]=useState<CameraMessage>('waiting'),[live,setLive]=useState(false);
   const [device,setDevice]=useState<CameraAnalysisState['device']>('starting');
-  const analysis=useVisualAnalysis(sessionId,allowed&&!locallyClosed&&live,request);
+  const [deviceKey,setDeviceKey]=useState<string|null|undefined>(undefined),[resetKey,setResetKey]=useState(0);
+  const analysis=useVisualAnalysis(sessionId,allowed&&!locallyClosed&&live&&deviceKey!==undefined,request,deviceKey,resetKey);
   const retrySeen=useRef(retrySignal),closeSeen=useRef(closeSignal);
-  useEffect(()=>{if(retrySeen.current!==retrySignal){retrySeen.current=retrySignal;setRequest(v=>v+1);}},[retrySignal]);
+  useEffect(()=>{if(retrySeen.current!==retrySignal){retrySeen.current=retrySignal;setResetKey(v=>v+1);setRequest(v=>v+1);}},[retrySignal]);
   const [preparation,setPreparation]=useState<VisionPreparation>(initialPreparation);
   useEffect(()=>{if(collapseSignal&&matchMedia('(max-width:767px)').matches)setCollapsed(true);},[collapseSignal]);
-  const stop=useCallback(()=>{generation.current++;disposeResources.current?.();disposeResources.current=null;stream.current?.getTracks().forEach(t=>t.stop());stream.current=null;if(video.current)video.current.srcObject=null;setLive(false);setDevice('stopped');onLive(false);setPreparation(initialPreparation);onAnalysis?.({sessionId,live:false,device:'stopped',deviceMessage:zhCN.camera.stopped,issue:false,connection:'off',observation:null});},[onLive,onAnalysis,sessionId]);
+  const stop=useCallback(()=>{generation.current++;disposeResources.current?.();disposeResources.current=null;stream.current?.getTracks().forEach(t=>t.stop());stream.current=null;if(video.current)video.current.srcObject=null;setLive(false);setDeviceKey(undefined);setDevice('stopped');onLive(false);setPreparation(initialPreparation);onAnalysis?.({sessionId,live:false,device:'stopped',deviceMessage:zhCN.camera.stopped,issue:false,connection:'off',observation:null});},[onLive,onAnalysis,sessionId]);
   useEffect(()=>{
-    const hidden=()=>{if(document.hidden){stop();setState('stoppedReopen');}};
-    document.addEventListener('visibilitychange',hidden);window.addEventListener('pagehide',stop);
-    return()=>{document.removeEventListener('visibilitychange',hidden);window.removeEventListener('pagehide',stop);};
-  },[stop]);
+    const resume=()=>{if(!document.hidden&&allowed&&!locallyClosed)setRequest(v=>v+1);};
+    const hidden=()=>{if(document.hidden){stop();setState('stoppedReopen');}else resume();};
+    const shown=(event:PageTransitionEvent)=>{if(event.persisted)resume();};
+    document.addEventListener('visibilitychange',hidden);window.addEventListener('pagehide',stop);window.addEventListener('pageshow',shown);
+    return()=>{document.removeEventListener('visibilitychange',hidden);window.removeEventListener('pagehide',stop);window.removeEventListener('pageshow',shown);};
+  },[stop,allowed,locallyClosed]);
   useEffect(()=>{
     if(!allowed||locallyClosed){stop();return;}
     if(document.hidden)return;
@@ -42,7 +46,9 @@ export function CameraPreview({allowed,collapseSignal,onOpen,onClose,onLive,aler
         if(disposed||generation.current!==epoch||document.hidden){media.getTracks().forEach(t=>t.stop());return;}
         stream.current=media;if(video.current){video.current.srcObject=media;await video.current.play();}
         if(disposed||generation.current!==epoch)return;
-        setState('');setDevice('live');setLive(true);onLive(true);
+        const key=await cameraDeviceKey(media);
+        if(disposed||generation.current!==epoch||document.hidden){media.getTracks().forEach(track=>track.stop());return;}
+        setDeviceKey(key);setState('');setDevice('live');setLive(true);onLive(true);
         for(const track of media.getTracks())track.onended=()=>{stop();setState('stopped');};
         setPreparation(preparationTransition(initialPreparation,{type:'start',at:Date.now()}));
         try{worker=new Worker(new URL('./vision.worker.ts',import.meta.url));}catch{setPreparation(p=>preparationTransition(p,{type:'error'}));return;}
@@ -50,7 +56,7 @@ export function CameraPreview({allowed,collapseSignal,onOpen,onClose,onLive,aler
           if(disposed||generation.current!==epoch)return;
           if(e.data.type==='preparation'&&e.data.stage==='runtime_loaded')setPreparation(p=>preparationTransition(p,{type:'runtime_loaded'}));
           if(e.data.type==='ready'){ready=true;setPreparation(p=>preparationTransition(p,{type:'model_ready'}));}
-          if(e.data.type==='quality'){inFlight=false;setPreparation(p=>preparationTransition(p,{type:'quality',quality:e.data.quality as Quality}));analysis.send(e.data.quality,e.data.features??null,e.data.sampledAt);}
+          if(e.data.type==='quality'){inFlight=false;setPreparation(p=>preparationTransition(p,{type:'quality',quality:e.data.quality as Quality}));analysis.send(e.data.quality,e.data.features??null,e.data.sampledAt,e.data.featureWindowSeconds??null);}
           if(e.data.type==='error'){ready=false;inFlight=false;setPreparation(p=>preparationTransition(p,{type:'error'}));}
         };
         worker.onerror=()=>{if(disposed||generation.current!==epoch)return;ready=false;inFlight=false;setPreparation(p=>preparationTransition(p,{type:'error'}));};
@@ -77,8 +83,8 @@ export function CameraPreview({allowed,collapseSignal,onOpen,onClose,onLive,aler
     if(opening||closing)return;
     setOpening(true);
     try{
-      await onOpen();
-      setLocallyClosed(false);setCollapsed(false);
+      if(!allowed)await onOpen();
+      setLocallyClosed(false);setCollapsed(false);setRequest(v=>v+1);
     }finally{setOpening(false);}
   };
   useEffect(()=>{onAnalysis?.({sessionId,live:allowed&&!locallyClosed&&live,device,deviceMessage:state?zhCN.camera[state]:'',

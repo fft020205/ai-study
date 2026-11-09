@@ -18,7 +18,7 @@ export type AIConnection = {provider:'none'|'openai'|'deeptutor';base_url:string
 export type AIConnectionInput = {provider:'none'|'openai';base_url:string;model:string;api_key?:string;timeout_seconds:number;clear_api_key?:boolean};
 export type AIConnectionTest = {ok:boolean;latency_ms:number;message:string};
 export type DialogueEvent = 'message'|'open'|'hint'|'answer'|'continue'|'skip';
-export type Action = 'open'|'hint'|'answer'|'continue'|'skip'|'think'|'reject'|'pause'|'resume'|'end'|'correct'|'consent';
+export type Action = 'open'|'hint'|'answer'|'continue'|'skip'|'think'|'reject'|'pause'|'resume'|'end'|'correct'|'consent'|'suspend';
 
 export type SessionTitle = {id:string;title:string;title_version:number};
 

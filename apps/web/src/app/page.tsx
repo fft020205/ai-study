@@ -88,7 +88,7 @@ export default function Home(){
     const current=active.current;if(!current)return;
     if(action==='correct'&&!extra.text){setCorrection('');return;}
     const generates=['open','hint','answer','continue','skip','correct'].includes(action);
-    const priority=['end','pause','think','reject','consent','correct'].includes(action);
+    const priority=['end','pause','suspend','think','reject','consent','correct'].includes(action);
     if(busy&&!priority)return;
     if(generates){if(action==='correct')streamLock.current=null;await runStream(current,extra.text||'',action as StreamEvent);return;}
     streamLock.current=null;setTurn(null);
@@ -114,11 +114,11 @@ export default function Home(){
   const navigate=async(next:View)=>{
     generation.current++;abort.current?.abort();streamLock.current=null;setTurn(null);setBusy(false);setError('');
     const s=active.current;
-    if(s?.status==='active')await control('pause');
+    if(s?.status==='active')await control('suspend');
     setView(next);
   };
   const newLearning=()=>{void navigate('tasks').then(()=>{setSession(null);setDraft('');});};
-  const openSession=async(s:LearningSession)=>{await navigate('learning');setDraft('');try{update(await api.get(s.id));}catch(e){report(e);}};
+  const openSession=async(s:LearningSession)=>{if(active.current?.id===s.id&&view==='learning')return;await navigate('learning');setDraft('');try{update(await api.get(s.id));}catch(e){report(e);}};
   const start=async(consent:Consent)=>{
     if(!selected)return;setBusy(true);
     try{update(await api.create(selected.id,consent));setDraft('');setView('learning');setError('');}catch(e){report(e);}finally{setBusy(false);}

@@ -5,7 +5,8 @@ import type {BehavioralFeatures} from './behaviorFeatures';
 import type {VisualObservation,VisionConnection} from './visualAnalysis';
 
 type Lease={run_id:string;ticket:string;websocket_path:string;calibration_seconds:number};
-export function useVisualAnalysis(sessionId:string|undefined,active:boolean,restartKey=0){
+export function useVisualAnalysis(sessionId:string|undefined,active:boolean,restartKey=0,deviceKey?:string|null,resetKey=0){
+  const resetSeen=useRef(resetKey);
   const socket=useRef<WebSocket|null>(null),connected=useRef(false),seq=useRef(0),lastSent=useRef(0);
   const [state,setState]=useState<{sessionId?:string;restartKey:number;connection:VisionConnection;observation:VisualObservation|null}>({sessionId,restartKey,connection:'off',observation:null});
   useEffect(()=>{
@@ -14,8 +15,9 @@ export function useVisualAnalysis(sessionId:string|undefined,active:boolean,rest
     connected.current=false;seq.current=0;lastSent.current=0;setState({sessionId,restartKey,connection:'connecting',observation:null});
     void (async()=>{
       try{
-        const lease=await request<Lease>(`/sessions/${sessionId}/vision/start`,{method:'POST',signal:abort.signal});
+        const lease=await request<Lease>(`/sessions/${sessionId}/vision/start`,{method:'POST',signal:abort.signal,body:JSON.stringify({device_key:deviceKey??null,reset:resetKey!==resetSeen.current})});
         if(disposed)return;
+        resetSeen.current=resetKey;
         const url=new URL(lease.websocket_path,location.origin);url.protocol=location.protocol==='https:'?'wss:':'ws:';
         const ws=new WebSocket(url);socket.current=ws;
         ws.onopen=()=>{if(!disposed)ws.send(JSON.stringify({type:'hello',ticket:lease.ticket}));};
@@ -28,12 +30,12 @@ export function useVisualAnalysis(sessionId:string|undefined,active:boolean,rest
       }catch{if(!disposed){connected.current=false;setState({sessionId,restartKey,connection:'error',observation:null});}}
     })();
     return()=>{disposed=true;abort.abort();connected.current=false;socket.current?.close();socket.current=null;};
-  },[sessionId,active,restartKey]);
-  const send=useCallback((quality:Quality,features:BehavioralFeatures|null,sampledAt:number)=>{
+  },[sessionId,active,restartKey,deviceKey,resetKey]);
+  const send=useCallback((quality:Quality,features:BehavioralFeatures|null,sampledAt:number,featureWindowSeconds:number|null=null)=>{
     const ws=socket.current,now=performance.now();
     if(!connected.current||!ws||ws.readyState!==WebSocket.OPEN||ws.bufferedAmount>16000||now-lastSent.current<450)return;
     lastSent.current=now;
-    ws.send(JSON.stringify({seq:++seq.current,sampled_at:sampledAt/1000,quality,features:quality==='valid'?features:null}));
+    ws.send(JSON.stringify({seq:++seq.current,sampled_at:sampledAt/1000,quality,features:quality==='valid'?features:null,feature_window_seconds:quality==='valid'?featureWindowSeconds:null}));
   },[]);
   const current=active&&state.sessionId===sessionId&&state.restartKey===restartKey;
   return {connection:current?state.connection:'off' as VisionConnection,observation:current?state.observation:null,send};

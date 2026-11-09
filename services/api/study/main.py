@@ -13,7 +13,7 @@ from urllib.parse import urlsplit
 from .ai_connection import AIConnection, AIConnectionUpdate, ConnectionSettingsError, is_loopback
 from pydantic import ValidationError
 from .config import settings
-from .contracts import CreateSession, RenameSession, Answer, StreamAnswer, Control, Activity
+from .contracts import CreateSession, RenameSession, Answer, StreamAnswer, Control, Activity, VisionStart
 from .storage import Repository, Conflict, Missing
 from .policy import SupportPolicy
 from .support import support_context,episode_context,support_key,record_support_attempt,record_support_generation
@@ -28,14 +28,25 @@ def create_app(config=settings, repository=None, provider=None):
     connection=AIConnection(config, load_saved=provider is None)
     ai=TeachingService(provider or make_provider(connection.current))
     policy=SupportPolicy(config)
-    vision=VisionService(config.vision_enabled)
+    vision=VisionService(config.vision_enabled,calibration_cache_seconds=config.vision_calibration_cache_seconds)
     running={}
     @asynccontextmanager
     async def lifespan(app):
-        # Server restart invalidates in-flight results rather than leaving a stuck UI.
-        yield
-        for task in list(running.values()): task.cancel()
-        for owner,sid in list(vision.runs):await vision.stop(owner,sid)
+        async def prune_calibrations():
+            while True:
+                await asyncio.sleep(30)
+                vision.prune()
+        cleanup=asyncio.create_task(prune_calibrations())
+        try:
+            # Server restart invalidates in-flight results rather than leaving a stuck UI.
+            yield
+        finally:
+            cleanup.cancel()
+            try:await cleanup
+            except asyncio.CancelledError:pass
+            for task in list(running.values()):task.cancel()
+            for owner,sid in list(vision.runs):await vision.stop(owner,sid)
+            vision.calibrations.entries.clear()
 
     app=FastAPI(title='AI Study Product API',version='0.2.0',lifespan=lifespan)
     app.state.repo=repo;app.state.policy=policy;app.state.vision=vision
@@ -191,7 +202,7 @@ def create_app(config=settings, repository=None, provider=None):
                 current['requests'][body.request_id]=fingerprint(body.text,event)
                 current['requests']=dict(list(current['requests'].items())[-100:])
             result=save(request,current,started_version)
-            if stop_vision:await vision.stop(request.state.owner,sid)
+            if stop_vision:await vision.stop(request.state.owner,sid,keep_calibration=current['status']=='active' and current['consent']['support'])
             return result
         except CalibrationRequired as exc:
             clear_pending(request,sid,body.request_id,started_version)
@@ -253,7 +264,7 @@ def create_app(config=settings, repository=None, provider=None):
         # Safety controls are idempotent and valid even with a stale UI version.
         for _ in range(3):
             s=get(request,sid);v=s['version']
-            priority=body.action in ('end','pause') or (body.action=='consent' and body.consent and (not body.consent.camera or not body.consent.support))
+            priority=body.action in ('end','pause','suspend') or (body.action=='consent' and body.consent and (not body.consent.camera or not body.consent.support))
             pending_control = bool(s['pending']) and body.action in ('think','reject','correct') and body.version in (v-1,s.get('pending_base_version'))
             automatic_version=s.get('auto_base_version')
             automatic_control=automatic_version is not None and automatic_version<=body.version<=v
@@ -265,7 +276,8 @@ def create_app(config=settings, repository=None, provider=None):
             except ValueError as exc: raise HTTPException(400,str(exc))
             try:
                 result=save(request,s,v);cancel(sid)
-                if body.action in ('end','pause','consent'):await vision.stop(request.state.owner,sid)
+                if body.action in ('end','pause','consent','suspend'):
+                    await vision.stop(request.state.owner,sid,keep_calibration=s['status']=='active' and s['consent']['support'])
                 if body.action=='correct' and ai.provider.configured:
                     return await generate(request,sid,Answer(text=body.text,version=s['version'],request_id=str(uuid.uuid4()),language=body.language),event='correct',client_version=body.version)
                 return result
@@ -417,9 +429,9 @@ def create_app(config=settings, repository=None, provider=None):
         return public_session(s)
 
     @app.post('/api/sessions/{sid}/vision/start',tags=['视觉判定'])
-    async def start_vision(sid:str,request:Request):
+    async def start_vision(sid:str,request:Request,body:VisionStart|None=None):
         s=get(request,sid)
-        try:return vision.start(request.state.owner,s)
+        try:return vision.start(request.state.owner,s,device_key=body.device_key if body else None,reset=body.reset if body else False)
         except VisionUnavailable as exc:raise HTTPException(503,str(exc))
         except VisionRejected as exc:raise HTTPException(409,str(exc))
 
@@ -433,7 +445,7 @@ def create_app(config=settings, repository=None, provider=None):
         cookie=websocket.cookies.get('study_identity','')
         if origin not in config.allowed_origins.split(',') or len(cookie)!=64:
             await websocket.close(code=4403);return
-        owner=hashlib.sha256(cookie.encode()).hexdigest();run=None
+        owner=hashlib.sha256(cookie.encode()).hexdigest();run=None;retain_calibration=True
         try:
             s=repo.get(owner,sid)
             if not permitted(s):raise VisionRejected('视觉授权无效。')
@@ -456,10 +468,11 @@ def create_app(config=settings, repository=None, provider=None):
                 await websocket.send_json({'type':'analysis','data':result})
         except (WebSocketDisconnect,RuntimeError):pass
         except (VisionRejected,Missing,ValidationError,ValueError,TypeError,TimeoutError):
+            retain_calibration=False
             try:await websocket.close(code=4409)
             except RuntimeError:pass
         finally:
-            if run and vision.runs.get((owner,sid)) is run:vision.runs.pop((owner,sid),None)
+            if run:vision.detach(owner,sid,run,remember=retain_calibration)
 
     @app.get('/api/sessions/{sid}/export')
     def export(sid:str,request:Request):

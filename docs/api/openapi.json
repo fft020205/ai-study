@@ -494,6 +494,23 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/VisionStart"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -808,7 +825,8 @@
               "resume",
               "end",
               "correct",
-              "consent"
+              "consent",
+              "suspend"
             ],
             "title": "Action"
           },
@@ -990,6 +1008,30 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VisionStart": {
+        "properties": {
+          "device_key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Key"
+          },
+          "reset": {
+            "type": "boolean",
+            "title": "Reset",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "VisionStart"
       }
     }
   }

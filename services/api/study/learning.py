@@ -73,6 +73,9 @@ def reset_errors(s):
 def apply_control(s, command):
     ensure_dialogue(s);action=command.action
     if s['status']=='ended': return
+    if action=='suspend':
+        s['pending']=None;s['pending_event']=None;clear_unshown_episode(s)
+        return  # Navigation pauses resources, preserving consent and the visible card.
     cancel_pending(s)
     if action=='end':
         s['status']='ended';s['support_mode']='off';s['consent']['camera']=False

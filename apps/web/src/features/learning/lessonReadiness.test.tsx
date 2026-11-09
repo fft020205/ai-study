@@ -37,3 +37,13 @@ it('retains sent text and retry identity when camera loss interrupts a streamed 
  expect(suspendTurnForCalibration(turn,'other')).toBeNull();
  expect(suspendTurnForCalibration(paused,'s')).toBe(paused);
 });
+
+
+it('renders five-second recovery honestly and keeps dialogue open during feature warm-up',()=>{
+ const recovery={...camera,observation:{...camera.observation!,calibration_mode:'resume' as const,status:'revalidating' as const,calibrated:false,valid_seconds:2,required_seconds:5}};
+ const markup=renderToStaticMarkup(createElement(LessonPreparation,{title:'平均数01',camera:recovery,busy:false,onRetry:()=>{},onDisableCamera:()=>{}}));
+ expect(markup).toContain('max="5"');expect(markup).toContain('value="2"');expect(markup).toContain('快速恢复学习');
+ expect(markup).toContain('重新校准');expect(markup).not.toContain('60 秒有效');
+ expect(needsLessonCalibration(session,recovery)).toBe(true);
+ expect(needsLessonCalibration(session,{...camera,observation:{...camera.observation!,calibration_mode:'resume',status:'warming_up',valid:false,calibrated:true,required_seconds:5,valid_seconds:5}})).toBe(false);
+});

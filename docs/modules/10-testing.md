@@ -105,3 +105,13 @@ Vitest 使用 jsdom，`vitest.setup.ts` 初始化真实 i18n 资源与实例；�
 ## 旧后端与422提示回归（2026-11-04）
 
 `api-errors.test.ts`使用旧后端真实422结构验证JSON与SSE共用版本不匹配提示、中英文映射、一般参数错误、字符串detail及非JSON故障回退；原始校验input不进入可见错误。开发脚本开启后端自动重载，运行核对health、OpenAPI新增language以及通过Next代理创建/删除独立英文测试会话，不调用真实模型。
+
+## 短时切页与校准恢复（2026-11-09）
+
+test_calibration_resume.py使用原引擎、受控时钟及临时数据库，覆盖同设备5秒有效复核、无效暂停、部分进度、warming期间不可用、归属与课程隔离、换设备/过期/reset/关闭复用/无设备键、低基线、期限不续期、容量、旧run迟到、suspend及撤权/删除清理。CameraResume测试后台停止tracks与前台恢复不重复提交同意；cameraDeviceKey测试匹配/变更/不可用；useVisualAnalysis测试普通重连与显式reset；lessonReadiness测试5秒渲染及预热不拦对话。
+
+真实Chrome对生产Shell/准备/状态组件的静态渲染检查1414×827、360×800两种中英文布局：无横向溢出，max=5/实际2秒正确，摄像头不覆盖进度。截图标注合成状态；没有开启硬件或调用真实模型，不能把布局/合成特征当设备与测量效度验证。
+
+## 恢复状态等待回归（2026-11-09）
+
+校准恢复测试改为确认：真实5秒有效复核后立即analyzing/valid并有CLI；短暂无效后不再等待另一分钟。behaviorFeatures测试增加5秒样本换算频率、无效间隙排除与成熟滚动窗口；VisualAnalysisStatus测试新数据监测中及旧warming_up过期时显示等待有效画面。实际模型与硬件效果仍需真机评估。

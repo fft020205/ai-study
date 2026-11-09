@@ -1,7 +1,8 @@
 export type VisualObservation={
   available:boolean;run_id?:string;algorithm?:string;upstream_commit?:string;
-  status:'off'|'calibrating'|'analyzing'|'waiting_quality'|'baseline_insufficient';
+  status:'off'|'calibrating'|'analyzing'|'waiting_quality'|'baseline_insufficient'|'revalidating'|'warming_up';
   valid:boolean;calibrated?:boolean;baseline_quality?:'pending'|'adequate'|'insufficient';quality?:string;calibration_progress?:number;
+  calibration_mode?:'full'|'resume'|'continued';feature_window_seconds?:number|null;blink_rate_estimated?:boolean|null;
   valid_seconds?:number;required_seconds?:number;phase?:string;cli?:number|null;
   sampled_at?:number|null;age_seconds?:number|null;support_hint?:'possible_fatigue'|'possible_overload'|null;
   signal_ratios?:{fatigue:number;distraction:number;stress:number}|null;

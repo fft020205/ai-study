@@ -112,14 +112,18 @@ export const zhCN = {
     disconnected: 'AI 尚未连接 · 输入会保留，连接服务后可发送'
   },
   lessonPreparation: {
+    resumeTitle: '快速恢复学习', continuedTitle: '继续完成校准',
+    resumeDescription: '已保留本次课程的校准。保持面部清晰可见，约 {{required}} 秒有效画面复核后即可继续。',
+    continuedDescription: '之前的有效校准进度已保留。保持面部在画面中，完成剩余采样后即可继续。',
+    revalidating: '快速复核中', recalibrate: '重新校准',
     label: '学习前摄像头校准', eyebrow: '正式学习前 · {{title}}', title: '先准备好，再开始',
     description: '请保持面部在画面中，自然眨眼。累计约 60 秒有效画面后，会自动进入 AI 对话。',
     baselineInsufficient: '画面基线不足，请重新校准', cameraError: '摄像头暂时无法开启，请检查权限或设备',
     recognitionInterrupted: '识别暂时中断，请重试', stopped: '摄像头已停止，请重新开启',
     preparingCamera: '正在准备摄像头', connecting: '正在连接识别服务',
     waiting: '等待有效画面，校准进度已保留', calibrating: '正在校准',
-    seconds: '{{seconds}} / 60 秒', progress: '学习前校准进度',
-    progressValue: '已完成{{seconds}}秒有效采样，共60秒',
+    seconds: '{{seconds}} / {{required}} 秒', progress: '学习前校准进度',
+    progressValue: '已完成{{seconds}}秒有效采样，共{{required}}秒',
     progressHelp: '画面不清晰或未检测到人脸时，进度会暂停；校准期间 AI 不会出题。',
     retry: '重新开启并校准', disable: '关闭摄像头，继续学习'
   },
@@ -137,7 +141,7 @@ export const zhCN = {
     eyebrow: '由你掌控', title: '隐私与数据说明', textTitle: '文字与学习记录',
     textBody: '只有点击发送的文字会进入产品服务。草稿保留在当前页面内存；刷新或离开会清除。访客身份以浏览器 Cookie 区分，请勿在公共设备上共享同一浏览器档案。',
     cameraTitle: '摄像头',
-    cameraBody: '视频和人脸关键点只在浏览器内处理，不发送、不保存。眨眼频率、视线偏移和头部运动特征通过本机后端的视觉引擎判定，临时保存在内存；当前有效状态摘要会提供给你配置的AI服务。视觉行为提示不等于情绪或心理诊断。收起仅隐藏预览；关闭、后台或结束会停采并关闭视觉连接。',
+    cameraBody: '视频和人脸关键点只在浏览器内处理，不发送、不保存。眨眼频率、视线偏移和头部运动特征通过本机后端的视觉引擎判定，临时保存在内存；当前有效状态摘要会提供给你配置的AI服务。视觉行为提示不等于情绪或心理诊断。收起仅隐藏预览；关闭、后台或结束会停采并关闭视觉连接。同一课程和摄像头的校准参考只在本机内存临时保留，有效期最多15分钟，便于短时恢复；结束或撤销主动支持时清除，不保存照片或视频。',
     aiTitle: 'AI 服务与保留期限',
     aiBody: '连接 AI 后，已提交文字、近期对话、当前练习及有依据的自述状态会发送至配置的第三方服务。该服务的保存与训练设置须由接入者核实。当前本地学习记录保留至你主动删除，没有自动清理期限。',
     export: '导出这次学习', delete: '删除这次学习记录',
@@ -163,14 +167,15 @@ export const zhCN = {
     draggable: '可拖动摄像头窗口', move: '移动摄像头窗口', moveHelp: '拖动移动；方向键微调位置'
   },
   vision: {
+    revalidating: '快速复核中', warming: '监测恢复中',
     preparationLabel: '视觉检测准备状态', loadingRuntime: '加载检测…', loadingModel: '准备模型…',
     checkingFrame: '等待有效画面', ready: '检测就绪', error: '检测不可用', slow: '加载较慢',
     seconds: '{{seconds}}秒', reload: '重新加载检测', progress: '视觉检测准备进度',
     analysisLabel: '视觉判定状态', behaviorEstimate: '视觉行为估计，仅供辅助参考',
     disconnected: '连接中断', connecting: '连接中…', recalibrate: '需要重新校准',
     waiting: '等待有效画面', paused: '校准暂停', calibrating: '正在校准', monitoring: '监测中',
-    calibrationSeconds: '{{seconds}}/60秒', reconnect: '重新连接并校准', calibrationProgress: '个人基线校准进度',
-    calibrationValue: '有效采样{{seconds}}秒，共60秒；画面无效时暂停'
+    calibrationSeconds: '{{seconds}}/{{required}}秒', reconnect: '重新连接并校准', calibrationProgress: '个人基线校准进度',
+    calibrationValue: '有效采样{{seconds}}秒，共{{required}}秒；画面无效时暂停'
   },
   alerts: {
     label: '学习状态提醒', visualSource: '视觉信号，待你确认', selfSource: '根据你的反馈',

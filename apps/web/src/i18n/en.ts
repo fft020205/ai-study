@@ -115,14 +115,18 @@ export const en: TranslationShape<typeof zhCN> = {
     disconnected: 'AI not connected · Your input will be kept until you connect a service and send it'
   },
   lessonPreparation: {
+    resumeTitle: 'Get back to learning', continuedTitle: 'Continue calibration',
+    resumeDescription: 'Calibration for this session is available. Keep your face clearly visible for about {{required}} seconds of valid checks to continue.',
+    continuedDescription: 'Your valid calibration progress has been kept. Keep your face in view to finish the remaining samples.',
+    revalidating: 'Quick check', recalibrate: 'Recalibrate',
     label: 'Camera calibration before learning', eyebrow: 'Before learning · {{title}}', title: 'Get ready before you begin',
     description: 'Keep your face in frame and blink naturally. The AI conversation will start after about 60 seconds of valid footage.',
     baselineInsufficient: 'Insufficient baseline footage. Recalibrate.', cameraError: 'The camera cannot start. Check permissions or your device.',
     recognitionInterrupted: 'Recognition was interrupted. Try again.', stopped: 'Camera stopped. Turn it on again.',
     preparingCamera: 'Preparing camera', connecting: 'Connecting to recognition service',
     waiting: 'Waiting for valid footage. Calibration progress is preserved.', calibrating: 'Calibrating',
-    seconds: '{{seconds}} / 60 sec', progress: 'Pre-learning calibration progress',
-    progressValue: '{{seconds}} of 60 seconds of valid sampling completed',
+    seconds: '{{seconds}} / {{required}} sec', progress: 'Pre-learning calibration progress',
+    progressValue: '{{seconds}} of {{required}} seconds of valid sampling completed',
     progressHelp: 'Progress pauses when footage is unclear or no face is detected. AI will not introduce exercises during calibration.',
     retry: 'Turn on camera and recalibrate', disable: 'Turn off camera and continue learning'
   },
@@ -140,7 +144,7 @@ export const en: TranslationShape<typeof zhCN> = {
     eyebrow: 'You are in control', title: 'Privacy & Data', textTitle: 'Text and learning records',
     textBody: 'Only text you click to send enters the product service. Drafts stay in the current page’s memory and are cleared when you refresh or leave. Guest identities are distinguished by browser cookies; do not share the same browser profile on a public device.',
     cameraTitle: 'Camera',
-    cameraBody: 'Video and facial landmarks are processed only in your browser and are never sent or saved. Blink rate, gaze shifts, and head movement features are assessed by the local backend’s vision engine and temporarily stored in memory. A summary of the current valid state is provided to your configured AI service. Visual behavioral cues are not emotional or psychological diagnoses. Collapsing only hides the preview; turning off the camera, moving to the background, or ending the session stops collection and closes the vision connection.',
+    cameraBody: 'Video and facial landmarks are processed only in your browser and are never sent or saved. Blink rate, gaze shifts, and head movement features are assessed by the local backend’s vision engine and temporarily stored in memory. A summary of the current valid state is provided to your configured AI service. Visual behavioral cues are not emotional or psychological diagnoses. Collapsing only hides the preview; turning off the camera, moving to the background, or ending the session stops collection and closes the vision connection. Calibration references for the same learning session and camera are kept temporarily only in local server memory and are valid for up to 15 minutes for quick recovery; ending the session or withdrawing proactive support clears them. Photos and video are never saved.',
     aiTitle: 'AI services and retention',
     aiBody: 'After AI is connected, submitted text, recent conversations, the current exercise, and evidence-based self-reported states are sent to the configured third-party service. The integrator must verify that provider’s retention and training settings. Local learning records are kept until you delete them; there is no automatic cleanup period.',
     export: 'Export this learning session', delete: 'Delete this learning record',
@@ -166,14 +170,15 @@ export const en: TranslationShape<typeof zhCN> = {
     draggable: 'Draggable camera window', move: 'Move camera window', moveHelp: 'Drag to move; use arrow keys to fine-tune the position'
   },
   vision: {
+    revalidating: 'Quick check', warming: 'Resuming monitoring',
     preparationLabel: 'Vision detection preparation status', loadingRuntime: 'Loading detection…', loadingModel: 'Preparing model…',
     checkingFrame: 'Waiting for a valid frame', ready: 'Detection ready', error: 'Detection unavailable', slow: 'Loading is taking longer',
     seconds: '{{seconds}} sec', reload: 'Reload detection', progress: 'Vision detection preparation progress',
     analysisLabel: 'Vision assessment status', behaviorEstimate: 'Visual behavior estimate for supplementary reference only',
     disconnected: 'Disconnected', connecting: 'Connecting…', recalibrate: 'Recalibration required',
     waiting: 'Waiting for valid footage', paused: 'Calibration paused', calibrating: 'Calibrating', monitoring: 'Monitoring',
-    calibrationSeconds: '{{seconds}}/60 sec', reconnect: 'Reconnect and recalibrate', calibrationProgress: 'Personal baseline calibration progress',
-    calibrationValue: '{{seconds}} of 60 seconds of valid sampling; pauses for invalid footage'
+    calibrationSeconds: '{{seconds}}/{{required}} sec', reconnect: 'Reconnect and recalibrate', calibrationProgress: 'Personal baseline calibration progress',
+    calibrationValue: '{{seconds}} of {{required}} seconds of valid sampling; pauses for invalid footage'
   },
   alerts: {
     label: 'Learning status reminder', visualSource: 'Visual signal; awaiting your confirmation', selfSource: 'Based on your feedback',

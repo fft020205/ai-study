@@ -34,7 +34,7 @@ flowchart LR
 
 | 方法与路径 | 行为 |
 |---|---|
-| POST /api/sessions/{sid}/vision/start | 验证owner、active及camera/support同意；替换旧run，签发一次性ticket |
+| POST /api/sessions/{sid}/vision/start | 验证owner、active及camera/support同意；可用device_key匹配短期参考，创建新run与一次性ticket |
 | GET /api/sessions/{sid}/vision | 当前视觉摘要；关闭/无效run时available=false，不恢复旧状态 |
 | GET /api/health | vision_configured表示原引擎文件已通过校验 |
 | GET /api/bootstrap | capabilities.visual_analysis表示当前可用能力 |
@@ -69,13 +69,13 @@ sampled_at为真实采集Unix秒，seq自1递增。无效包例如：
 {"seq":2,"sampled_at":1800000000.5,"quality":"no_face","features":null}
 ```
 
-单包最多4096字符；禁止额外字段/原始landmarks，禁止NaN/Infinity。blink_rate范围0–240，其他两项0–2；时间不可倒退，不接收超过三秒或未来超过一秒的数据。包间至少100ms，正常客户端约500ms；异常请求关闭4409，身份/Origin不合格4403。断线清除run；页面显式重试创建新run重新校准，没有伪造结果的fallback。
+单包最多4096字符；禁止额外字段/原始landmarks，禁止NaN/Infinity。blink_rate范围0–240，其他两项0–2；时间不可倒退，不接收超过三秒或未来超过一秒的数据。包间至少100ms，正常客户端约500ms；异常请求关闭4409，身份/Origin不合格4403。断线清除run与当前观测，可短时保留服务端校准参考；新run必须经过真实准备或5秒有效复核，没有伪造结果的fallback。
 
 服务端无新包时约1.5秒重算并返回摘要，三秒后有效性变为stale。每包重新检查归属、当前授权和run，旧ticket/run不能恢复采集。
 
 ## 特征、校准与输出
 
-- blink_rate：最近60秒观察到的闭眼事件数；EAR阈值0.22/0.25迟滞，左眼33/160/158/133/153/144。
+- blink_rate：最近滚动分钟中，闭眼事件数除以实际有效观测时长，换算为每分钟频率（初始分母至少1秒，上限240）。短窗通过feature_window_seconds/blink_rate_estimated标注；EAR阈值0.22/0.25迟滞，左眼33/160/158/133/153/144。
 - gaze_deviation：左虹膜468–472的水平中心相对眼中心偏移，以眼宽归一化；不是眼动仪测量。
 - head_jitter：当前与上一帧鼻尖index1在归一化坐标中的距离；受帧率、姿态和摄像头位置影响。
 
@@ -123,4 +123,12 @@ UI精简补充：摄像头不再直接展示CLI和多段解释，正常为“监
 
 支持卡在有效视觉候选从疲劳切换到负荷或恢复未知时，可经6秒稳定窗口交给真实模型重写，共享每轮3次不同状态额度，不等待全局冷却；只有同一失败状态重试退避30秒；当前自述/纠正仍优先。标题和正文表达的是支持建议，视觉来源保持暂定，不额外上传视频或关键点。旧卡在重写中保留，提交前再次检查有效状态签名，变化后的迟到解释不能覆盖当前卡，见模块05。
 
-摄像头开启后的准备流程已前置：VisionService.dialogue_ready 检查授权 run 的 calibrated 和 adequate 基线，准备完成前不进入 AI 对话。原60秒有效时间和质量门控不变，未新增人脸数据持久化或基线缓存。当前 run 完成后的临时低质量不会重新门控，run 丢失/重建时才重新准备；模型调用前、流式投影及最终提交均有检查。完整流程与复用可行性见模块16。
+摄像头准备前置：VisionService.dialogue_ready检查授权run的calibrated/adequate。首次60秒有效采样不变；2026-11-09起新增短期内存参考，同课程同设备重建run时5秒有效复核，未持久化人脸数据。恢复不再额外等待60秒，5秒有效复核后提供当前真实数据，短窗频率附带统计时长供模型审慎判断。调用、delta、提交仍检查准备与版本；见模块16/18。
+
+## 校准参考协议补充（2026-11-09）
+
+start接受可选VisionStart={device_key:null|64位摘要,reset:false}，不传则兼容完整校准；响应新增calibration_mode=full/resume/continued。VisualObservation新增revalidating/warming_up状态、calibration_mode和feature_window_seconds，required_seconds与valid_seconds按当前准备阶段为60或5。缓存不进入模型/导出，原特征、时效与独立LLM判定通路保留，恢复不复用旧phase/CLI/警告/判断。完整合同、清理和限制见[模块18](18-calibration-reuse.md)。
+
+## 恢复长时间等待修复（2026-11-09）
+
+取消原先warming_up必须连续60秒有效帧、遇一次无效又重计的附加门槛。VisionPacket新增可选feature_window_seconds（0–60，失效画面必须为空），来自Worker实际有效观测时长；原三个派生特征不变，后端snapshot新增blink_rate_estimated。满5秒真实复核且当前画面有效后立即输出analyzing/valid和真实指标，不只改UI名称。原版引擎及哈希保持，短窗估计的模型提示与UI过期优先规则已同步。

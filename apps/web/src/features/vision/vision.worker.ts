@@ -27,7 +27,7 @@ worker.onmessage=async(e:MessageEvent)=>{
         let features=quality==='valid'?extractor.extract(points,e.data.timestamp,bitmap.width,bitmap.height):null;
         if(quality==='valid'&&!features)quality='out_of_frame';
         if(quality!=='valid')extractor.invalidate();
-        worker.postMessage({type:'quality',quality,features,sampledAt:e.data.sampledAt});
+        worker.postMessage({type:'quality',quality,features,featureWindowSeconds:quality==='valid'?Math.round(extractor.observedSeconds*1000)/1000:null,sampledAt:e.data.sampledAt});
       }finally{bitmap.close();}
     }
   }catch{worker.postMessage({type:'error'});}

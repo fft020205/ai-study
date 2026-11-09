@@ -68,3 +68,7 @@ event=support 时额外输入 proactive_context={kind,signals} 与 previous_supp
 ## 模型回复语言（2026-11-04）
 
 评估与生成payload新增 `response_language`，来自本轮服务端会话快照。评估器支持中英文并保留原文证据；共享REPLY_SYSTEM要求reply、support_title、练习自然语言和visual_judgment.reason遵循en/zh-CN偏好，课程和枚举不变。适用于普通、流式及后台支持，兼容旧记录中文回退；不额外调用翻译模型。并发与完整接口见[模块17](17-dialogue-language.md)。
+
+## 视觉短窗数据（2026-11-09）
+
+恢复后的有效视觉数据附带feature_window_seconds和blink_rate_estimated，不额外等一分钟才进入模型上下文。REPLY_SYSTEM明确短窗眨眼频率属于估计，结合其他当前线索及对话保持不确定，不能单凭此断言疲劳或过载；可见回复仍不展开技术过程。原逐次snapshot刷新、校准与过期检查保留。

@@ -15,6 +15,10 @@ class CreateSession(Contract):
     task_id: Literal['variable', 'mean', 'causality']
     consent: Consent = Field(default_factory=Consent)
 
+class VisionStart(Contract):
+    device_key: str | None = Field(default=None,pattern=r'^[a-f0-9]{64}$')
+    reset: bool = False
+
 class RenameSession(Contract):
     title: str = Field(max_length=80)
 
@@ -38,7 +42,7 @@ class StreamAnswer(Answer):
 
 class Control(Contract):
     language: Language | None = None
-    action: Literal['open', 'hint', 'answer', 'continue', 'skip', 'think', 'reject', 'pause', 'resume', 'end', 'correct', 'consent']
+    action: Literal['open', 'hint', 'answer', 'continue', 'skip', 'think', 'reject', 'pause', 'resume', 'end', 'correct', 'consent', 'suspend']
     version: int = Field(ge=0)
     text: str = Field(default='', max_length=1000)
     consent: Consent | None = None
