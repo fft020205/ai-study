@@ -20,6 +20,7 @@ RESUME_SECONDS=5.0
 class CalibrationRequired(Exception): pass
 class VisionUnavailable(Exception): pass
 class VisionRejected(Exception): pass
+class VisionSampleRejected(VisionRejected): pass
 
 class VisualFeatures(Contract):
     blink_rate: FiniteFloat = Field(ge=0,le=240)
@@ -55,7 +56,8 @@ class VisionRun:
         self.clock=clock;self.run_id=secrets.token_urlsafe(18);self.consent_key=consent_key(s)
         self.effective_seconds=0.0;self.fresh_seconds=0.0;self.last_feature_window_seconds=None
         self.device_key=device_key;self.calibration_created_at=clock()
-        self.calibration_mode='full'
+        self.calibration_mode='full';self.reference=reference
+        self.last_calibration_verified_at=reference.last_valid_at if reference else clock()
         namespace={'__name__':'adaptive_cognitive_engine'}
         exec(compiled,namespace)
         # The original engine uses time.time. Its isolated clock advances only on
@@ -80,10 +82,10 @@ class VisionRun:
     def observe(self,p,wall_now):
         now=self.clock()
         if p.seq<=self.last_seq or (self.last_sample is not None and p.sampled_at<=self.last_sample):
-            raise VisionRejected('视觉数据已过期或顺序无效。')
+            raise VisionSampleRejected('视觉数据已过期或顺序无效。')
         age=wall_now-p.sampled_at
-        if age < -1 or age > FEATURE_TTL: raise VisionRejected('视觉数据不在有效时间范围内。')
-        if self.last_arrival is not None and now-self.last_arrival<0.1: raise VisionRejected('视觉数据发送过于频繁。')
+        if age < -1 or age > FEATURE_TTL: raise VisionSampleRejected('视觉数据不在有效时间范围内。')
+        if self.last_arrival is not None and now-self.last_arrival<0.1: raise VisionSampleRejected('视觉数据发送过于频繁。')
         self.last_capture_age=max(0.0,age)
         self.last_seq=p.seq;self.last_sample=p.sampled_at;self.last_arrival=now;self.last_quality=p.quality
         if p.quality!='valid':
@@ -107,6 +109,8 @@ class VisionRun:
         was_calibrating=self.engine.calibrating
         self.latest=self.engine.process(**p.features.model_dump())
         if was_calibrating and not self.engine.calibrating:self.calibration_created_at=now
+        if not self.engine.calibrating and (self.calibration_mode!='resume' or self.fresh_seconds>=RESUME_SECONDS):
+            self.last_calibration_verified_at=now
         phase=self.latest['phase']
         if phase!=previous_phase:self.judgment=None;self.observation_epoch+=1
         if phase in ('Overload','Fatigue'):
@@ -185,7 +189,7 @@ class VisionService:
         self.tickets[ticket]=(key,run.run_id,self.clock()+30)
         if old and old.ws:
             asyncio.create_task(self._close(old.ws))
-        return {'run_id':run.run_id,'ticket':ticket,'websocket_path':f"/api/sessions/{s['id']}/vision/ws",'calibration_seconds':RESUME_SECONDS if reference and reference.complete else CALIBRATION_SECONDS,'calibration_mode':run.calibration_mode}
+        return {'run_id':run.run_id,'ticket':ticket,'websocket_path':f"/api/sessions/{s['id']}/vision/ws",'calibration_seconds':RESUME_SECONDS if reference and reference.complete else CALIBRATION_SECONDS,'calibration_mode':run.calibration_mode,'lesson_ready':self.dialogue_ready(owner,s)}
 
     def attach(self,owner,s,ticket,ws):
         value=self.tickets.pop(ticket,None);key=(owner,s['id']);run=self.runs.get(key)
@@ -201,10 +205,18 @@ class VisionService:
 
     def dialogue_ready(self,owner,s):
         if not s.get('consent',{}).get('camera'):return True
-        try:observation=self.current(owner,s).snapshot()
-        except VisionRejected:return False
-        # A completed baseline remains ready during temporary low-quality frames in the same run.
-        return bool(observation.get('calibrated') and observation.get('baseline_quality')=='adequate')
+        try:run=self.current(owner,s)
+        except VisionRejected:
+            return self.reference_ready(self.calibrations.peek((owner,s['id'])),s)
+        observation=run.snapshot()
+        if observation.get('calibrated') and observation.get('baseline_quality')=='adequate':return True
+        # A transient transport outage does not undo a lesson's completed setup.
+        # New consent, a changed device, reset or expired idle reference still gate.
+        return self.reference_ready(run.reference,s)
+
+    def reference_ready(self,reference,s):
+        return bool(reference and reference.complete and reference.device_key and permitted(s)
+            and reference.consent_key==consent_key(s) and self.calibrations.fresh(reference))
 
     def require_dialogue_ready(self,owner,s):
         if not self.dialogue_ready(owner,s):
@@ -217,8 +229,9 @@ class VisionService:
         if not current.get('valid') or not current.get('calibrated') or current.get('phase')!=observation.get('phase') or current.get('observation_epoch')!=observation.get('observation_epoch'):return
         run.judgment=judgment.model_dump()|{'reviewed_at':self.wall_time(),'reviewed_at_monotonic':self.clock()}
 
-    def project(self,run,s):
+    def project(self,owner,run,s):
         observation=run.snapshot()
+        observation['lesson_ready']=self.dialogue_ready(owner,s)
         hint=observation['support_hint']
         dimension,value=('fatigue','absent') if hint=='possible_fatigue' else ('cognitive_load','manageable')
         claim=s.get('learner_state',{}).get(dimension,{})
@@ -228,8 +241,8 @@ class VisionService:
         return observation
 
     def snapshot(self,owner,s):
-        try:return self.project(self.current(owner,s),s)
-        except VisionRejected:return {'available':False,'valid':False,'status':'off','support_hint':None}
+        try:return self.project(owner,self.current(owner,s),s)
+        except VisionRejected:return {'available':False,'valid':False,'status':'off','support_hint':None,'lesson_ready':self.dialogue_ready(owner,s)}
 
     def detach(self,owner,sid,run,remember=True):
         key=(owner,sid)

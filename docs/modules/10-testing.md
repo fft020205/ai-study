@@ -115,3 +115,7 @@ test_calibration_resume.py使用原引擎、受控时钟及临时数据库，覆
 ## 恢复状态等待回归（2026-11-09）
 
 校准恢复测试改为确认：真实5秒有效复核后立即analyzing/valid并有CLI；短暂无效后不再等待另一分钟。behaviorFeatures测试增加5秒样本换算频率、无效间隙排除与成熟滚动窗口；VisualAnalysisStatus测试新数据监测中及旧warming_up过期时显示等待有效画面。实际模型与硬件效果仍需真机评估。
+
+## 答题中反复60秒的链路回归
+
+新增page.camera.test.tsx，用真实页面/摄像头/hook及tests内媒体、WS和Provider替身，验证用户发送、SSE接收、草稿输入、视觉断线、自动复核、回答完成全链路：输入节点和新草稿保留，不abort回答，不再次getUserMedia，无reset。CameraResume区分retry与recalibrate；device key测试同流随机键和新流不复用。后端实际原引擎/WS覆盖迟到/拥堵帧不丢基线、学习超过15分钟后的短断、评分中视觉掉线但回复继续且视觉标为未知。旧首次校准/强制清除/撤权测试继续保留。

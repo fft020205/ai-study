@@ -13,8 +13,14 @@ it('matches the camera setup without exposing raw identifiers',async()=>{
   expect(key).not.toBe(await cameraDeviceKey(media('private-device-id',1280)));
   expect(key).not.toContain('private-device-id');
 });
-it('disables reference reuse when device identity or hashing is unavailable',async()=>{
-  expect(await cameraDeviceKey(media())).toBeNull();
+it('keeps a stream-scoped key when hardware identity is unavailable',async()=>{
+  vi.stubGlobal('crypto',webcrypto);
+  const stream=media();const key=await cameraDeviceKey(stream);
+  expect(key).toMatch(/^[a-f0-9]{64}$/);
+  expect(await cameraDeviceKey(stream)).toBe(key);
+  expect(await cameraDeviceKey(media())).not.toBe(key);
+});
+it('disables reuse if secure randomness is unavailable',async()=>{
   vi.stubGlobal('crypto',undefined);
   expect(await cameraDeviceKey(media('device'))).toBeNull();
 });

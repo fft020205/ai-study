@@ -27,7 +27,7 @@ it('renders actual effective progress and recovery without a question or compose
  expect(markup).toContain('等待有效画面');expect(markup).toContain('关闭摄像头，继续学习');
  expect(markup).not.toContain('textarea');
  const error=renderToStaticMarkup(createElement(LessonPreparation,{title:'平均数01',camera:{...camera,issue:true},busy:false,onRetry:()=>{},onDisableCamera:()=>{}}));
- expect(error).toContain('重新开启并校准');
+ expect(error).toContain('重新连接摄像头');
 });
 
 it('retains sent text and retry identity when camera loss interrupts a streamed turn',()=>{
@@ -46,4 +46,13 @@ it('renders five-second recovery honestly and keeps dialogue open during feature
  expect(markup).toContain('重新校准');expect(markup).not.toContain('60 秒有效');
  expect(needsLessonCalibration(session,recovery)).toBe(true);
  expect(needsLessonCalibration(session,{...camera,observation:{...camera.observation!,calibration_mode:'resume',status:'warming_up',valid:false,calibrated:true,required_seconds:5,valid_seconds:5}})).toBe(false);
+});
+
+
+it('keeps a prepared lesson open through connection loss but honors server-required reset',()=>{
+ expect(needsLessonCalibration(session,{...camera,connection:'error',observation:null},true)).toBe(false);
+ expect(needsLessonCalibration(session,{...camera,live:false,observation:null},true)).toBe(false);
+ expect(needsLessonCalibration(session,{...camera,observation:{...camera.observation!,calibrated:false,lesson_ready:true}})).toBe(false);
+ expect(needsLessonCalibration(session,{...camera,observation:{...camera.observation!,lesson_ready:false}},true)).toBe(true);
+ expect(needsLessonCalibration(session,null)).toBe(true);
 });

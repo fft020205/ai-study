@@ -132,3 +132,7 @@ start接受可选VisionStart={device_key:null|64位摘要,reset:false}，不传�
 ## 恢复长时间等待修复（2026-11-09）
 
 取消原先warming_up必须连续60秒有效帧、遇一次无效又重计的附加门槛。VisionPacket新增可选feature_window_seconds（0–60，失效画面必须为空），来自Worker实际有效观测时长；原三个派生特征不变，后端snapshot新增blink_rate_estimated。满5秒真实复核且当前画面有效后立即输出analyzing/valid和真实指标，不只改UI名称。原版引擎及哈希保持，短窗估计的模型提示与UI过期优先规则已同步。
+
+## 迟到帧与答题时断线
+
+时序/到达频率异常抛出VisionSampleRejected，WS丢弃当前包并投影仍有时效约束的状态；不再因为单个迟到包销毁基线。原非法字段/原始影像/越权/授权失效仍拒绝。lesson_ready区分课程准备与视觉valid：同授权的完整参考可让文字流程在短暂断线或后台复核期间继续，当前视觉始终available/valid=false，不沿用旧指标。新设备/reset/新授权仍要求准备，见模块18。

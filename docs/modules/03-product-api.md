@@ -91,3 +91,7 @@ camera=true 时生成入口要求当前 owner/session/consent 的视觉 run 已�
 ## 暂时离开与校准恢复（2026-11-09）
 
 controls.action新增suspend：接受优先取消，停视觉、保留consent/support_mode/当前学习位置与已显示卡片，供站内导航使用；原pause仍表示明确暂停支持。vision/start新增可选VisionStart(device_key,reset)，新run可以复用服务端短期参考但仍须有效复核。OpenAPI同步，详细时效和字段见[模块18](18-calibration-reuse.md)。
+
+## 课程准备与视觉可用性
+
+vision/start响应及VisualObservation新增服务端lesson_ready布尔值。它只代表当前owner/session/consent是否已满足课程准备，不能当作视觉valid；断线期间可true而available/valid=false。客户端不能提交完成标记。参考附带consent_key，修改授权/设备或reset不能继承旧放行；请求/流式提交的权限与版本门控保持。

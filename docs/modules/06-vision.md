@@ -69,3 +69,7 @@ cameraDeviceKey对摄像头设置做本机SHA-256摘要，useVisualAnalysis在st
 ## 眨眼短窗估计与状态优先级（2026-11-09）
 
 BehaviorFeatureExtractor按滚动分钟中的真实有效区间换算每分钟眨眼频率，无效/长间隙不充当分母，先前有效区间不会因单帧无效全部清零。Worker→CameraPreview→WS同步feature_window_seconds，缺失时兼容旧调用。5秒复核后立即真实监测，取消额外60秒连续预热。状态组件先判断断线/无效/过期，不让旧warming_up标签遮蔽失效状态。没有新增断点、图标或布局。
+
+## 答题连续性与恢复信号
+
+视觉连接error不再卸载已准备课程的对话与输入。WS自动重连复用当前MediaStream，摄像头左上角仍显示实际连接/复核/监测状态，不把缓存参考当作实时画面。连接重试与强制重新校准分开，只有recalibrateSignal清除参考。deviceId不可用时只做同一媒体流的随机键匹配；后台停采、关闭保持关闭及旧回调隔离仍保留，详见模块18。

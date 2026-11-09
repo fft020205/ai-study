@@ -1,7 +1,7 @@
 import {useTranslation} from 'react-i18next';
 import {Button,Icon} from '@/components/ui';
 import type {CameraAnalysisState} from '@/features/vision/visualAnalysis';
-export function LessonPreparation({title,camera,busy,onRetry,onDisableCamera}:{title:string;camera:CameraAnalysisState|null;busy:boolean;onRetry:()=>void;onDisableCamera:()=>void}){
+export function LessonPreparation({title,camera,busy,onRetry,onRecalibrate,onDisableCamera}:{title:string;camera:CameraAnalysisState|null;busy:boolean;onRetry:()=>void;onRecalibrate?:()=>void;onDisableCamera:()=>void}){
  const {t}=useTranslation();
  const observation=camera?.observation,required=Math.max(1,Math.min(60,observation?.required_seconds??60));
  const seconds=Math.max(0,Math.min(required,Math.floor(observation?.valid_seconds??0)));
@@ -15,6 +15,6 @@ export function LessonPreparation({title,camera,busy,onRetry,onDisableCamera}:{t
   <div className="lesson-preparation-progress"><div className="lesson-preparation-status"><Icon name="camera"/><strong role="status">{t(`lessonPreparation.${status}`)}</strong><span>{t('lessonPreparation.seconds',{seconds,required})}</span></div>
    <progress max={required} value={seconds} aria-label={t('lessonPreparation.progress')} aria-valuetext={t('lessonPreparation.progressValue',{seconds,required})}/>
    <p className="caption muted">{t('lessonPreparation.progressHelp')}</p></div>
-  <div className="actions">{(resumed||continued)&&<Button variant="ghost" disabled={busy} onClick={onRetry}>{t('lessonPreparation.recalibrate')}</Button>}{(failed||stopped)&&<Button disabled={busy} onClick={onRetry}>{t('lessonPreparation.retry')}</Button>}<Button variant="ghost" disabled={busy} onClick={onDisableCamera}>{t('lessonPreparation.disable')}</Button></div>
+  <div className="actions">{(resumed||continued)&&<Button variant="ghost" disabled={busy} onClick={onRecalibrate??onRetry}>{t('lessonPreparation.recalibrate')}</Button>}{(failed||stopped)&&<Button disabled={busy} onClick={onRetry}>{t('lessonPreparation.retry')}</Button>}<Button variant="ghost" disabled={busy} onClick={onDisableCamera}>{t('lessonPreparation.disable')}</Button></div>
  </div></section>;
 }

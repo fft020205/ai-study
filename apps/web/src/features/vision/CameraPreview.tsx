@@ -13,15 +13,16 @@ import {CameraStatusWarning} from './CameraStatusWarning';
 import type {CameraAlert} from '@/lib/types';
 import type {Quality} from './quality';
 type CameraMessage='waiting'|'stopped'|'stoppedReopen'|'requesting'|'error'|'';
-export function CameraPreview({allowed,collapseSignal,onOpen,onClose,onLive,alerts=[],sessionId,onAnalysis,retrySignal=0,closeSignal=0}:{allowed:boolean;collapseSignal:number;onOpen:()=>Promise<void>;onClose:()=>Promise<void>;onLive:(v:boolean)=>void;alerts?:CameraAlert[];sessionId?:string;onAnalysis?:(state:CameraAnalysisState)=>void;retrySignal?:number;closeSignal?:number}){
+export function CameraPreview({allowed,collapseSignal,onOpen,onClose,onLive,alerts=[],sessionId,onAnalysis,retrySignal=0,recalibrateSignal=0,closeSignal=0}:{allowed:boolean;collapseSignal:number;onOpen:()=>Promise<void>;onClose:()=>Promise<void>;onLive:(v:boolean)=>void;alerts?:CameraAlert[];sessionId?:string;onAnalysis?:(state:CameraAnalysisState)=>void;retrySignal?:number;recalibrateSignal?:number;closeSignal?:number}){
   const {t}=useTranslation();
   const video=useRef<HTMLVideoElement>(null),stream=useRef<MediaStream|null>(null),generation=useRef(0),disposeResources=useRef<(()=>void)|null>(null);
   const [opening,setOpening]=useState(false),[closing,setClosing]=useState(false),[locallyClosed,setLocallyClosed]=useState(false),[request,setRequest]=useState(0),[collapsed,setCollapsed]=useState(false),[state,setState]=useState<CameraMessage>('waiting'),[live,setLive]=useState(false);
   const [device,setDevice]=useState<CameraAnalysisState['device']>('starting');
   const [deviceKey,setDeviceKey]=useState<string|null|undefined>(undefined),[resetKey,setResetKey]=useState(0);
   const analysis=useVisualAnalysis(sessionId,allowed&&!locallyClosed&&live&&deviceKey!==undefined,request,deviceKey,resetKey);
-  const retrySeen=useRef(retrySignal),closeSeen=useRef(closeSignal);
-  useEffect(()=>{if(retrySeen.current!==retrySignal){retrySeen.current=retrySignal;setResetKey(v=>v+1);setRequest(v=>v+1);}},[retrySignal]);
+  const retrySeen=useRef(retrySignal),resetSeen=useRef(recalibrateSignal),closeSeen=useRef(closeSignal);
+  useEffect(()=>{if(retrySeen.current!==retrySignal){retrySeen.current=retrySignal;setRequest(v=>v+1);}},[retrySignal]);
+  useEffect(()=>{if(resetSeen.current!==recalibrateSignal){resetSeen.current=recalibrateSignal;setResetKey(v=>v+1);setRequest(v=>v+1);}},[recalibrateSignal]);
   const [preparation,setPreparation]=useState<VisionPreparation>(initialPreparation);
   useEffect(()=>{if(collapseSignal&&matchMedia('(max-width:767px)').matches)setCollapsed(true);},[collapseSignal]);
   const stop=useCallback(()=>{generation.current++;disposeResources.current?.();disposeResources.current=null;stream.current?.getTracks().forEach(t=>t.stop());stream.current=null;if(video.current)video.current.srcObject=null;setLive(false);setDeviceKey(undefined);setDevice('stopped');onLive(false);setPreparation(initialPreparation);onAnalysis?.({sessionId,live:false,device:'stopped',deviceMessage:zhCN.camera.stopped,issue:false,connection:'off',observation:null});},[onLive,onAnalysis,sessionId]);
@@ -96,7 +97,7 @@ export function CameraPreview({allowed,collapseSignal,onOpen,onClose,onLive,aler
     evidence_note:visual.llm_judgment?t('camera.aiOpinion',{reason:visual.llm_judgment.reason}):t('camera.heuristicEvidence'),captured_at:visual.sampled_at!,expires_at:visual.sampled_at!+3
   }]:[];
   const combinedAlerts=[...alerts,...visualAlerts.filter(v=>!alerts.some(a=>a.kind===v.kind))];
-  const status=live&&(preparation.stage==='ready'?<VisualAnalysisStatus connection={analysis.connection} observation={analysis.observation} onRetry={()=>setRequest(v=>v+1)}/>:<VisionPreparationStatus state={preparation} compact onRetry={()=>setRequest(v=>v+1)}/>);
+  const status=live&&(preparation.stage==='ready'?<VisualAnalysisStatus connection={analysis.connection} observation={analysis.observation} onRetry={analysis.reconnect}/>:<VisionPreparationStatus state={preparation} compact onRetry={()=>setRequest(v=>v+1)}/>);
   if(!allowed||locallyClosed)return <FloatingCamera><aside className="camera collapsed camera-closed" aria-label={t('camera.closedLabel')}><CameraDragHandle/><button type="button" className="camera-reopen" onClick={()=>void reopen()} disabled={opening||closing}><Icon name="cameraOff"/><span>{t(closing?'camera.closing':opening?'camera.opening':'camera.open')}</span></button></aside></FloatingCamera>;
   return <FloatingCamera><aside className={`camera ${collapsed?'collapsed':''}`} aria-label={t('camera.previewLabel')}><div className="camera-picture" hidden={collapsed}><video ref={video} muted playsInline autoPlay aria-label={t('camera.liveLabel')}/>{live?<><div className="camera-monitor-badge">{status}</div><CameraStatusWarning alerts={combinedAlerts}/></>:<div className="camera-off-state"><Icon name="cameraOff"/><span>{state?t(`camera.${state}`):''}</span><Button variant="ghost" onClick={()=>setRequest(v=>v+1)}>{t('camera.reopen')}</Button></div>}</div><div className="camera-toolbar"><CameraDragHandle/><span>{live?t(collapsed?'camera.onCompact':'camera.you'):t('camera.stopped')}</span><button aria-label={t(collapsed?'camera.expand':'camera.collapse')} onClick={()=>setCollapsed(!collapsed)} title={t('camera.collapseTitle')}><Icon name="minimize"/></button><button aria-label={t('camera.close')} onClick={()=>void close()}><Icon name="cameraOff"/></button></div>
 </aside></FloatingCamera>;

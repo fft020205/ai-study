@@ -31,9 +31,14 @@ export default function Home(){
   const [draft,setDraft]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[composing,setComposing]=useState(false),[reading,setReading]=useState(false),[cameraLive,setCameraLive]=useState(false),[collapseSignal,setCollapseSignal]=useState(0);
   const [correction,setCorrection]=useState<string|null>(null),[historyAction,setHistoryAction]=useState<HistoryAction|null>(null);
   const active=useRef<LearningSession|null>(null);active.current=session;
-  const [cameraAnalysis,setCameraAnalysis]=useState<CameraAnalysisState|null>(null),[cameraRetry,setCameraRetry]=useState(0),[cameraClose,setCameraClose]=useState(0);
+  const [cameraAnalysis,setCameraAnalysis]=useState<CameraAnalysisState|null>(null),[cameraRetry,setCameraRetry]=useState(0),[cameraReset,setCameraReset]=useState(0),[cameraClose,setCameraClose]=useState(0);
   const updateCameraAnalysis=useCallback((next:CameraAnalysisState)=>{if(next.sessionId===active.current?.id)setCameraAnalysis(next);},[]);
-  const needsCalibration=needsLessonCalibration(session,cameraAnalysis);
+  const preparedLesson=useRef<string|null>(null);
+  const readinessScope=session?`${session.id}:${cameraReset}`:'';
+  if(!session?.consent.camera||session.status!=='active')preparedLesson.current=null;
+  else if(cameraAnalysis?.sessionId===session.id&&cameraAnalysis.observation?.lesson_ready===false)preparedLesson.current=null;
+  else if(!needsLessonCalibration(session,cameraAnalysis))preparedLesson.current=readinessScope;
+  const needsCalibration=needsLessonCalibration(session,cameraAnalysis,preparedLesson.current===readinessScope);
   const preparing=useRef(needsCalibration);preparing.current=needsCalibration;
   const openingAttempted=useRef(new Set<string>());
   const deletedSessions=useRef(new Set<string>());
@@ -129,7 +134,7 @@ export default function Home(){
   };
   const end=()=>{void control('end');setView('learning');};
   const cameraAllowed=!!(session&&view==='learning'&&session.status==='active'&&session.consent.camera&&session.support_mode==='on');
-  const camera=<CameraPreview sessionId={session?.id} onAnalysis={updateCameraAnalysis} retrySignal={cameraRetry} closeSignal={cameraClose} alerts={session?.camera_alerts} allowed={cameraAllowed} collapseSignal={collapseSignal} onOpen={async()=>{
+  const camera=<CameraPreview sessionId={session?.id} onAnalysis={updateCameraAnalysis} retrySignal={cameraRetry} recalibrateSignal={cameraReset} closeSignal={cameraClose} alerts={session?.camera_alerts} allowed={cameraAllowed} collapseSignal={collapseSignal} onOpen={async()=>{
     if(!session?.consent.support){await navigate('settings');return;}
     await control('consent',{consent:{support:true,camera:true}});
   }} onLive={setCameraLive} onClose={()=>control('consent',{consent:{support:session?.consent.support||false,camera:false}})}/>;
@@ -142,7 +147,7 @@ export default function Home(){
       {view==='consent'&&selected&&<ConsentPanel title={courseTitle(selected.id,selected.title)} aiConfigured={data.capabilities.ai_configured} busy={busy} onSubmit={c=>void start(c)} onBack={()=>setView('tasks')} onAISettings={()=>setView('ai-settings')}/>}
       {view==='settings'&&(session?.status==='active'?<ConsentPanel key={session.id+':settings'} title={localizeSessionTitle(session)} settings initial={session.consent} aiConfigured={data.capabilities.ai_configured} busy={busy} onSubmit={c=>void control('consent',{consent:c}).then(()=>setView('learning'))} onBack={()=>setView('learning')} onAISettings={()=>setView('ai-settings')}/>:<section className="content-page"><div className="readable stack-20"><p className="eyebrow">{t('consent.editable')}</p><h1>{t('consent.settingsTitle')}</h1><p className="muted">{t('consent.noSessionDescription')}</p><div className="actions"><Button onClick={newLearning}>{t('consent.chooseTask')}</Button><Button onClick={()=>setView('ai-settings')}>{t('common.aiSettings')}</Button></div></div></section>)}
       {view==='learning'&&session&&(session.status==='ended'?<SessionSummary session={session} onHome={newLearning} onPrivacy={()=>setView('privacy')}/>:<>
-        {needsCalibration?<LessonPreparation title={localizeSessionTitle(session)} camera={cameraAnalysis?.sessionId===session.id?cameraAnalysis:null} busy={busy} onRetry={()=>setCameraRetry(v=>v+1)} onDisableCamera={()=>setCameraClose(v=>v+1)}/>:<>
+        {needsCalibration?<LessonPreparation title={localizeSessionTitle(session)} camera={cameraAnalysis?.sessionId===session.id?cameraAnalysis:null} busy={busy} onRetry={()=>setCameraRetry(v=>v+1)} onRecalibrate={()=>{preparedLesson.current=null;setCameraAnalysis(null);setCameraReset(v=>v+1);}} onDisableCamera={()=>setCameraClose(v=>v+1)}/>:<>
           <Conversation session={session} configured={data.capabilities.ai_configured} onAISettings={()=>void navigate('ai-settings')} turn={turn} onRetry={()=>void retryTurn()} busy={busy} onAction={a=>void control(a)} onReading={setReading}/>
           <Composer draft={draft} onChange={setDraft} onSend={()=>void send()} onHint={()=>void control('hint')} onComposing={setComposing} busy={busy} configured={data.capabilities.ai_configured} onFocus={()=>setCollapseSignal(v=>v+1)}/>
         </>}

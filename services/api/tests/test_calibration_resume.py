@@ -46,13 +46,14 @@ def test_same_device_reconnect_requires_five_actual_valid_seconds_and_clears_old
     lease=service.start('owner',session,DEVICE);run=service.current('owner',session)
     assert lease['calibration_seconds']==5 and lease['calibration_mode']=='resume'
     assert run.run_id!=old.run_id and run.judgment is None
-    assert not service.dialogue_ready('owner',session)
+    assert service.dialogue_ready('owner',session)  # Lesson continues; visual recheck is separate.
+    assert not run.snapshot()['calibrated']
     assert run.snapshot()['sampled_at'] is None and run.snapshot()['support_hint'] is None
     result=feed(clock,run,count=10)
     assert result['valid_seconds']==4.5 and not result['calibrated']
     # Invalid footage and time spent away cannot fill the quick check.
     feed(clock,run,11,1,'no_face');clock.advance(20)
-    feed(clock,run,12,1);assert not service.dialogue_ready('owner',session)
+    feed(clock,run,12,1);assert not run.snapshot()['calibrated']
     result=feed(clock,run,13,1)
     assert result['calibrated'] and service.dialogue_ready('owner',session)
     assert result['status']=='analyzing' and result['valid']
@@ -103,7 +104,7 @@ async def test_explicit_disposal_clears_references_and_resume_does_not_renew_exp
     await service.stop('owner',session['id'],keep_calibration=True)
     clock.advance(800)
     assert service.start('owner',session,DEVICE)['calibration_mode']=='resume'
-    resumed=service.current('owner',session);feed(clock,resumed,count=11)
+    resumed=service.current('owner',session);feed(clock,resumed,count=10)
     service.detach('owner',session['id'],resumed)
     assert service.calibrations.entries[('owner',session['id'])].created_at==created
     clock.advance(100)
@@ -122,7 +123,7 @@ def test_memory_cache_is_bounded_and_stale_disconnect_cannot_replace_current_run
     assert service.current('owner',session) is current
 
 
-def test_navigation_suspend_preserves_consent_and_server_gate_still_requires_recheck(fixture_app):
+def test_navigation_preserves_consent_and_dialogue_during_background_visual_recheck(fixture_app):
     client,app,provider=fixture_app;clock=Clock()
     app.state.vision.clock=clock.monotonic;app.state.vision.wall_time=clock.wall
     s=client.post('/api/sessions',json={'task_id':'variable','consent':{'support':True,'camera':True}}).json()
@@ -137,12 +138,14 @@ def test_navigation_suspend_preserves_consent_and_server_gate_still_requires_rec
     lease=client.post(url+'/vision/start',json={'device_key':DEVICE}).json()
     assert lease['calibration_mode']=='resume'
     body=dict(event='open',version=suspended['version'],request_id=str(uuid.uuid4()))
-    assert client.post(url+'/turns/stream',json=body).status_code==409 and not provider.calls
+    continued=client.post(url+'/turns',json=body)
+    assert continued.status_code==200 and len(provider.calls)==1
+    body=dict(event='hint',version=continued.json()['version'],request_id=str(uuid.uuid4()))
     with client.websocket_connect(lease['websocket_path'],headers={'origin':'http://127.0.0.1:3000'}) as ws:
         ws.send_json({'type':'hello','ticket':lease['ticket']});ws.receive_json()
         for seq in range(1,12):clock.advance();ws.send_json(sample(clock,seq).model_dump());ws.receive_json()
         opened=client.post(url+'/turns',json=body)
-        assert opened.status_code==200 and len(provider.calls)==1
+        assert opened.status_code==200 and len(provider.calls)==2
         text=client.get(url+'/export').text
         assert 'device_key' not in text and 'baseline_blink' not in text
         ended=client.post(url+'/controls',json={'action':'end','version':opened.json()['version']})
@@ -168,3 +171,63 @@ def test_camera_close_can_reuse_reference_but_support_revocation_and_delete_clea
     raw=app.state.repo.get(owner,s['id']);run=vision.current(owner,raw);feed(clock,run)
     vision.detach(owner,s['id'],run);assert vision.calibrations.entries
     assert client.delete(url).status_code==204 and not vision.calibrations.entries
+
+
+@pytest.mark.parametrize('kind',['delayed','batched'])
+def test_delayed_or_batched_frames_do_not_destroy_a_calibrated_run(fixture_app,kind):
+    client,app,provider=fixture_app;clock=Clock();vision=app.state.vision
+    vision.clock=clock.monotonic;vision.wall_time=clock.wall
+    s=client.post('/api/sessions',json={'task_id':'variable','consent':{'support':True,'camera':True}}).json()
+    url=f"/api/sessions/{s['id']}";lease=client.post(url+'/vision/start',json={'device_key':DEVICE}).json()
+    with client.websocket_connect(lease['websocket_path'],headers={'origin':'http://127.0.0.1:3000'}) as ws:
+        ws.send_json({'type':'hello','ticket':lease['ticket']});ws.receive_json()
+        for seq in range(1,122):clock.advance();ws.send_json(sample(clock,seq).model_dump());ws.receive_json()
+        if kind=='delayed':clock.advance(4)
+        bad=sample(clock,122)
+        if kind=='delayed':bad.sampled_at-=10
+        ws.send_json(bad.model_dump());dropped=ws.receive_json()['data']
+        assert dropped['run_id']==lease['run_id'] and dropped['calibrated'] and dropped['lesson_ready']
+        if kind=='delayed':assert not dropped['valid'] and dropped['support_hint'] is None
+        clock.advance();ws.send_json(sample(clock,123).model_dump());fresh=ws.receive_json()['data']
+        assert fresh['valid'] and fresh['calibrated'] and fresh['run_id']==lease['run_id']
+        response=client.post(url+'/turns',json=dict(text='我还在回答这个问题',version=s['version'],request_id=str(uuid.uuid4())))
+        assert response.status_code==200
+
+
+def test_active_monitoring_does_not_expire_baseline_mid_lesson_but_reset_still_gates():
+    clock,service,session,run=setup();feed(clock,run)
+    feed(clock,run,122,1802)
+    assert clock.monotonic()-run.calibration_created_at>900
+    service.detach('owner',session['id'],run)
+    assert service.dialogue_ready('owner',session)
+    assert service.start('owner',session,DEVICE)['calibration_mode']=='resume'
+    assert service.start('owner',session,DEVICE,reset=True)['calibration_mode']=='full'
+    assert not service.dialogue_ready('owner',session)
+
+
+async def test_vision_disconnect_during_grading_keeps_reply_and_sends_unknown_visual_state(tmp_path):
+    import httpx
+    from study.config import Settings
+    from study.main import create_app
+    from conftest import TestProvider
+    entered=asyncio.Event();release=asyncio.Event()
+    class Slow(TestProvider):
+        async def complete_json(self,system,payload):
+            result=await super().complete_json(system,payload)
+            if 'exercise' in payload:entered.set();await release.wait()
+            return result
+    provider=Slow();app=create_app(Settings(database_url=f'sqlite:///{tmp_path}/continuity.db',_env_file=None),provider=provider)
+    clock=Clock();vision=app.state.vision;vision.clock=clock.monotonic;vision.wall_time=clock.wall
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url='http://test',headers={'X-Study-Client':'web-v1'}) as client:
+        s=(await client.post('/api/sessions',json={'task_id':'variable','consent':{'support':True,'camera':True}})).json()
+        owner=hashlib.sha256(client.cookies['study_identity'].encode()).hexdigest();url=f"/api/sessions/{s['id']}"
+        raw=app.state.repo.get(owner,s['id']);vision.start(owner,raw,DEVICE);run=vision.current(owner,raw);feed(clock,run)
+        pending=asyncio.create_task(client.post(url+'/turns/stream',json=dict(text='继续讨论',version=s['version'],request_id=str(uuid.uuid4()))))
+        await asyncio.wait_for(entered.wait(),2)
+        vision.detach(owner,s['id'],run);release.set()
+        result=await asyncio.wait_for(pending,2)
+        assert 'event: complete' in result.text and 'event: error' not in result.text
+        assert len(provider.calls)==2 and not provider.calls[-1][1]['visual_observation']['valid']
+        assert not provider.calls[-1][1]['visual_observation']['available']
+        final=(await client.get(url)).json()
+        assert not final['pending'] and [m['role'] for m in final['messages']]==['user','assistant']

@@ -72,3 +72,7 @@ event=support 时额外输入 proactive_context={kind,signals} 与 previous_supp
 ## 视觉短窗数据（2026-11-09）
 
 恢复后的有效视觉数据附带feature_window_seconds和blink_rate_estimated，不额外等一分钟才进入模型上下文。REPLY_SYSTEM明确短窗眨眼频率属于估计，结合其他当前线索及对话保持不确定，不能单凭此断言疲劳或过载；可见回复仍不展开技术过程。原逐次snapshot刷新、校准与过期检查保留。
+
+## 视觉临时失联不取消文字回答
+
+课程已有同授权完整准备且参考仍有效时，视觉断线不阻断评分后的回复阶段或SSE提交；每次模型调用仍刷新snapshot，失联明确available=false/valid=false，visual_judgment强制为空，不沿用旧画面。首次/明确重校或撤权依然门控并可取消。回归通过测试Provider验证，不等于真实模型或硬件实测。

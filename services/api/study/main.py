@@ -20,7 +20,7 @@ from .support import support_context,episode_context,support_key,record_support_
 from .tasks import task_catalog
 from .learning import new_session, public_session, apply_control, message, ensure_dialogue, commit_dialogue, AI_ACTIONS, clear_unshown_episode
 from .stream_response import ManagedStreamResponse
-from .vision import VisionService, VisionPacket, VisionRejected, VisionUnavailable, CalibrationRequired, permitted
+from .vision import VisionService, VisionPacket, VisionRejected, VisionSampleRejected, VisionUnavailable, CalibrationRequired, permitted
 from .ai import make_provider, TeachingService, AIUnavailable, AIProtocolError
 
 def create_app(config=settings, repository=None, provider=None):
@@ -455,16 +455,18 @@ def create_app(config=settings, repository=None, provider=None):
             hello=json.loads(raw)
             if set(hello)!={'type','ticket'} or hello['type']!='hello':raise VisionRejected('视觉握手格式无效。')
             run=vision.attach(owner,s,hello['ticket'],websocket)
-            await websocket.send_json({'type':'connected','data':vision.project(run,s)})
+            await websocket.send_json({'type':'connected','data':vision.project(owner,run,s)})
             while True:
                 try:raw=await asyncio.wait_for(websocket.receive_text(),1.5)
                 except TimeoutError:
                     s=repo.get(owner,sid);vision.current(owner,s,run.run_id)
-                    await websocket.send_json({'type':'analysis','data':vision.project(run,s)});continue
+                    await websocket.send_json({'type':'analysis','data':vision.project(owner,run,s)});continue
                 if len(raw)>4096:raise VisionRejected('视觉请求过大。')
                 s=repo.get(owner,sid);vision.current(owner,s,run.run_id)
                 packet=VisionPacket.model_validate_json(raw)
-                run.observe(packet,vision.wall_time());result=vision.project(run,s)
+                try:run.observe(packet,vision.wall_time())
+                except VisionSampleRejected:pass  # Drop delayed/batched frames, not the calibrated run.
+                result=vision.project(owner,run,s)
                 await websocket.send_json({'type':'analysis','data':result})
         except (WebSocketDisconnect,RuntimeError):pass
         except (VisionRejected,Missing,ValidationError,ValueError,TypeError,TimeoutError):

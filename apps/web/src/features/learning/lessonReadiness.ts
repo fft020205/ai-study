@@ -2,8 +2,10 @@ import type {ActiveTurn} from './activeTurn';
 import type {LearningSession} from '@/lib/types';
 import type {CameraAnalysisState} from '@/features/vision/visualAnalysis';
 
-export function needsLessonCalibration(session:LearningSession|null,camera:CameraAnalysisState|null){
+export function needsLessonCalibration(session:LearningSession|null,camera:CameraAnalysisState|null,previouslyReady=false){
  if(!session||session.status!=='active'||!session.consent.camera)return false;
+ if(camera?.sessionId===session.id&&typeof camera.observation?.lesson_ready==='boolean')return !camera.observation.lesson_ready;
+ if(previouslyReady)return false;
  return !(camera?.sessionId===session.id&&camera.live&&!camera.issue&&camera.connection==='connected'
   &&camera.observation?.calibrated&&camera.observation.baseline_quality==='adequate');
 }
