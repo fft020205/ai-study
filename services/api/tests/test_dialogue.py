@@ -125,7 +125,7 @@ def test_open_and_help_are_idempotent_and_no_reference_leaks(fixture_app):
     assert control(c,first.json(),'open').json()==first.json()
 
 
-async def test_proactive_generation_is_cancelled_by_typing(tmp_path):
+async def test_proactive_generation_is_cancelled_by_leaving_page(tmp_path):
     entered=asyncio.Event()
     class Slow(TestProvider):
         async def complete_json(self,system,payload):
@@ -141,7 +141,7 @@ async def test_proactive_generation_is_cancelled_by_typing(tmp_path):
         pending=(await c.post(f"/api/sessions/{s['id']}/activity",json=flags)).json()
         await asyncio.wait_for(entered.wait(),2)
         assert pending['pending'] and pending['episode']['text'] is None
-        after=(await c.post(f"/api/sessions/{s['id']}/activity",json=flags|{'has_draft':True})).json()
+        after=(await c.post(f"/api/sessions/{s['id']}/activity",json=flags|{'foreground':False})).json()
         assert not after['pending'] and after['episode'] is None
         assert len(after['messages'])==1
 

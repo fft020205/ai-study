@@ -105,6 +105,7 @@ export const zhCN = {
     protected: '主动提醒已暂停，继续输入即可恢复对话。',
     supportPaused: '主动支持已暂停，文字学习仍可继续。', resume: '恢复支持',
     support: '主动支持', defaultSupportTitle: '按你的节奏来',
+    preparingSupport: '正在准备适合你的支持建议',
     thinkingAction: '我还在思考', helpAction: '需要一点帮助', dismissAction: '暂时不用'
   },
   composer: {

@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import json
+import logging
 import copy
 import secrets
 import time
@@ -23,6 +24,8 @@ from .stream_response import ManagedStreamResponse
 from .vision import VisionService, VisionPacket, VisionRejected, VisionSampleRejected, VisionUnavailable, CalibrationRequired, permitted
 from .ai import make_provider, TeachingService, AIUnavailable, AIProtocolError
 from .accounts import Accounts, Credentials, LimitedProvider, QuotaExceeded, current_owner, COOKIE, SESSION_SECONDS
+
+logger=logging.getLogger(__name__)
 
 def create_app(config=settings, repository=None, provider=None):
     repo=repository or Repository(config.database_url)
@@ -239,7 +242,7 @@ def create_app(config=settings, repository=None, provider=None):
             if current['version']!=started_version or current['pending']!=body.request_id or current['status']!='active': raise Conflict()
             if reply is not None:vision.require_dialogue_ready(request.state.owner,current)
             if event=='support':
-                # Activity heartbeats cancel pending support on new input, reading or leaving.
+                # Unsent input and reading retain triggered support; explicit controls or a new turn can cancel it.
                 # Do not publish if the browser stopped reporting activity while AI was working.
                 last=activity_seen.get(sid,0)
                 used=context['support_context_used']
@@ -248,6 +251,9 @@ def create_app(config=settings, repository=None, provider=None):
                 if (time.time()-last>8 or current['support_mode']!='on' or current['protected']
                     or support_key(current,latest)!=support_key(context,used) or not policy.can_generate(current,used)
                     or (not shown and used['kind']=='general')):
+                    logger.info('support_result_discarded heartbeat_fresh=%s support_on=%s protected=%s state_matches=%s budget_available=%s',
+                        time.time()-last<=8,current['support_mode']=='on',current['protected'],
+                        support_key(current,latest)==support_key(context,used),policy.can_generate(current,used))
                     current['pending']=None;current['pending_event']=None;clear_unshown_episode(current)
                     return save(request,current,started_version)
                 if reply.visual_judgment:vision.record_judgment(request.state.owner,current,context['visual_observation'],reply.visual_judgment)
@@ -285,7 +291,12 @@ def create_app(config=settings, repository=None, provider=None):
                 v=current['version'];current['pending']=None;current['pending_event']=None
                 if event=='support':clear_unshown_episode(current)
                 save(request,current,v)
-            if event=='support': return None  # No canned fallback for failed automatic support.
+            if event=='support':
+                if isinstance(exc,AIProtocolError):detail=str(exc)
+                elif isinstance(exc,ValidationError):detail=','.join(sorted({error['type'] for error in exc.errors(include_input=False,include_url=False)}))
+                else:detail=type(exc).__name__
+                logger.warning('support_generation_failed category=%s detail=%s',type(exc).__name__,detail)
+                return None  # No canned fallback for failed automatic support.
             raise HTTPException(429 if isinstance(exc,QuotaExceeded) else 502,str(exc) if isinstance(exc,(AIUnavailable,AIProtocolError)) else 'AI 返回格式不正确，输入已保留。')
         except (Conflict,Missing):
             if event=='support': return None
@@ -470,7 +481,9 @@ def create_app(config=settings, repository=None, provider=None):
             save(request,s,s['version']);body.version=s['version']
             if was_support:return public_session(s)
         ready=vision.dialogue_ready(request.state.owner,s)
-        inactive=body.has_draft or body.composing or body.busy or body.reading or not body.foreground or not ready
+        # Once triggered, let the real model finish even if the learner starts
+        # drafting or reading. Neither changes the submitted conversation.
+        inactive=body.busy or not body.foreground or not ready
         if s.get('pending_event')=='support':
             if inactive:
                 v=s['version'];s['pending']=None;s['pending_event']=None;clear_unshown_episode(s)

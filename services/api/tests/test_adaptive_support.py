@@ -131,7 +131,7 @@ async def test_existing_card_adapts_across_states_without_duplicate_cards_or_epi
         assert 'reference' not in str(neutral['episode'])
 
 
-@pytest.mark.parametrize('action',['typing','pause','failure'])
+@pytest.mark.parametrize('action',['pause','failure'])
 async def test_refresh_keeps_previous_card_when_interrupted_or_failed(tmp_path,monkeypatch,action):
     async with environment(tmp_path,monkeypatch) as env:
         await env.tick();old=(await env.settle())['episode']
@@ -139,8 +139,7 @@ async def test_refresh_keeps_previous_card_when_interrupted_or_failed(tmp_path,m
         for now in range(130,138,2):env.now[0]=now;await env.tick()
         await asyncio.wait_for(env.provider.entered.wait(),1)
         assert (await env.read())['episode']['text']==old['text']
-        if action=='typing':await env.tick(has_draft=True,composing=True)
-        elif action=='pause':
+        if action=='pause':
             current=await env.read()
             await env.client.post(f'/api/sessions/{env.sid}/controls',json=dict(action='pause',version=current['version']))
         else:env.provider.fail=True;env.provider.release.set()
@@ -208,3 +207,28 @@ async def test_rapid_different_states_generate_without_global_cooldown_and_stop_
         final=await env.settle()
         assert len(env.provider.supports)==3 and final['episode']['id']==first['episode']['id']
         assert 'support_round' not in final
+
+
+@pytest.mark.parametrize('refresh',[False,True])
+@pytest.mark.parametrize('flags',[{'has_draft':True,'composing':True},{'reading':True}])
+async def test_triggered_support_finishes_while_typing_or_reading(tmp_path,monkeypatch,refresh,flags):
+    async with environment(tmp_path,monkeypatch) as env:
+        old=None
+        if refresh:
+            await env.tick();old=(await env.settle())['episode']
+        env.now[0]=130
+        env.state(fatigue=claim('present',130))
+        env.provider.hold=True
+        for now in range(130,138,2):
+            env.now[0]=now;pending=await env.tick()
+        await asyncio.wait_for(env.provider.entered.wait(),1)
+        episode_id=pending['episode']['id']
+        interrupted=await env.tick(**flags)
+        assert interrupted['pending'], 'Unsent input and reading must not cancel triggered support'
+        assert interrupted['episode']['id']==episode_id
+        if old:assert interrupted['episode']['text']==old['text']
+        env.provider.release.set()
+        after=await env.settle()
+        assert not after['pending'] and after['episode']['id']==episode_id
+        assert after['episode']['kind']=='fatigue' and after['episode']['text']
+        assert len(env.provider.supports)==(2 if refresh else 1)

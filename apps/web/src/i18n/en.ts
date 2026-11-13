@@ -108,6 +108,7 @@ export const en: TranslationShape<typeof zhCN> = {
     protected: 'Proactive reminders are paused. Keep typing to resume the conversation.',
     supportPaused: 'Proactive support is paused. You can still learn through text.', resume: 'Resume support',
     support: 'Proactive support', defaultSupportTitle: 'Go at your own pace',
+    preparingSupport: 'Preparing support for you',
     thinkingAction: 'I’m still thinking', helpAction: 'I need a hint', dismissAction: 'Not now'
   },
   composer: {

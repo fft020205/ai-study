@@ -39,3 +39,13 @@ it('keeps Markdown tables in a labelled, keyboard-focusable scroll region',()=>{
  expect(markup).toContain('<th>Capability</th>');
  expect(markup).toContain('<td>Reasoning</td>');
 });
+
+
+it('shows preparation only after a real support request has been triggered',()=>{
+ const episode={id:'e',question_key:'q',reason:'fatigue',kind:'fatigue' as const,created_at:1,expires_at:null,text:null};
+ const pending=render('fatigue',false,{pending:true,episode});
+ expect(pending).toContain('正在准备适合你的支持建议');
+ expect(pending).not.toContain('aria-label="主动支持"');
+ expect(render('fatigue',false,{pending:false,episode})).not.toContain('正在准备适合你的支持建议');
+ expect(render('fatigue',false,{pending:true,episode,consent:{support:false,camera:false}})).not.toContain('正在准备适合你的支持建议');
+});

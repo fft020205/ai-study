@@ -30,7 +30,7 @@ Python测试位于services/api/tests：
 
 ## 动态对话专项
 
-`test_dialogue.py` 覆盖课题和历史投影、参考答案不下发、无证据/过期回unknown、正确与紧张并存、纠正优先、状态时效、旧会话兼容、无需按钮自动接续、自然语言控制、主动支持被输入/新回答取消、纠正生成失败仍保存。`test_product.py` 的create助手只在测试中显式请求开场；未配置测试验证所有教学动作503且不生成消息。
+`test_dialogue.py` 覆盖课题和历史投影、参考答案不下发、无证据/过期回unknown、正确与紧张并存、纠正优先、状态时效、旧会话兼容、无需按钮自动接续、自然语言控制、已触发支持在输入/阅读时继续、后台/新回答取消、纠正生成失败仍保存。`test_product.py` 的create助手只在测试中显式请求开场；未配置测试验证所有教学动作503且不生成消息。
 
 合同测试用tests里的Provider和HTTP/WebSocket替身；产品没有测试模型开关。浏览器仅验证实际能力状态，本轮没有通过伪造数据展示真实AI效果。真实模型评估清单见模块12。
 
@@ -62,11 +62,11 @@ test_history.py新增4项：持久化与重启/导出/同名幂等；空值/长�
 
 ## 支持卡片保留回归
 
-`test_support_retention.py` 验证 waiting/cognitive_load/fatigue/visual_signal 四类已显示卡片在输入、输入法、阅读、busy 和后台心跳之后仍保留，旧30秒期限不再撤销，普通/流式成功或失败及孤立 pending 恢复不丢失。明确选择、暂停、结束和撤权仍清除。`test_dialogue.py` 继续验证尚未显示的慢支持生成可被输入取消。`Conversation.test.tsx` 渲染真实组件验证 busy、旧期限、null期限及用户控制。`vitest.config.mts` 保持与 tsconfig 一致的 @ 源码别名，并使用 jsdom 与 `vitest.setup.ts` 初始化i18n。运行 npm test 和 npm run build；测试不调用真实模型或开启摄像头。
+`test_support_retention.py` 验证 waiting/cognitive_load/fatigue/visual_signal 四类已显示卡片在输入、输入法、阅读、busy 和后台心跳之后仍保留，旧30秒期限不再撤销，普通/流式成功或失败及孤立 pending 恢复不丢失。明确选择、暂停、结束和撤权仍清除。`test_dialogue.py` 验证离开前台可取消未显示的慢支持生成；`test_adaptive_support.py` 同时覆盖初次生成和原卡重写在草稿/输入法/阅读期间继续完成。`Conversation.test.tsx` 渲染真实组件验证 busy、旧期限、null期限及用户控制。`vitest.config.mts` 保持与 tsconfig 一致的 @ 源码别名，并使用 jsdom 与 `vitest.setup.ts` 初始化i18n。运行 npm test 和 npm run build；测试不调用真实模型或开启摄像头。
 
 ## 自适应支持回归
 
-`test_adaptive_support.py` 使用可控时钟、独立数据库和测试 Provider，验证混合状态/来源/时效、等待到疲劳及负荷和一般状态的原卡更新、稳定刷新与节流、输入和暂停取消、失败保留、视觉变更时拒绝迟到文本、实际 hint 的计分。前端 Conversation 渲染验证模型标题、Markdown 引导及删除纠正按钮。真实模型的语气多样性和教学语义不由这些测试证明。
+`test_adaptive_support.py` 使用可控时钟、独立数据库和测试 Provider，验证混合状态/来源/时效、等待到疲劳及负荷和一般状态的原卡更新、稳定刷新与节流、输入和阅读期间继续、暂停取消、失败保留、视觉变更时拒绝迟到文本、实际 hint 的计分。前端 Conversation 渲染验证模型标题、Markdown 引导及删除纠正按钮。真实模型的语气多样性和教学语义不由这些测试证明。
 
 ## 历史自动命名回归
 
