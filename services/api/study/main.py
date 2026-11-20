@@ -272,6 +272,7 @@ def create_app(config=settings, repository=None, provider=None):
                 else:
                     if reply.visual_judgment:vision.record_judgment(request.state.owner,current,context['visual_observation'],reply.visual_judgment)
                     commit_dialogue(current,assessment,reply,state,event,body.text,record_user=not submitted_id)
+                    if current['status']=='ended':policy.reset(sid);stop_vision=True
                 current['requests'][body.request_id]=fingerprint(body.text,event)
                 current['requests']=dict(list(current['requests'].items())[-100:])
             result=save(request,current,started_version)

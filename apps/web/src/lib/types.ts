@@ -6,7 +6,7 @@ export type Message = { id: string; request_id?:string; role: 'user'|'assistant'
 export type CameraAlert = {kind:'fatigue'|'high_load';source:'self_report'|'correction'|'visual_heuristic';evidence_quote:string;evidence_note?:string;captured_at:number;expires_at:number};
 export type LearningSession = {
   id: string; title: string; title_version: number; language?: Language; task_id: string; content_version: string; dialogue_version: string; version: number;
-  status: 'active'|'ended'; support_mode: 'on'|'off'|'paused'; consent: Consent;
+  status: 'active'|'ended'; milestone_reached: boolean; support_mode: 'on'|'off'|'paused'; consent: Consent;
   created_at: number; updated_at: number; node_index: number; total_steps: number;
   messages: Message[]; records: {node_id: string; status: string; hints:number}[];
   current_node: {id:string;title:string;kind:'question'|'feeling';prompt:string;code:string};

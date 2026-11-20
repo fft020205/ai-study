@@ -39,7 +39,7 @@ class TestSocket{
 beforeEach(async()=>{
   await i18n.changeLanguage('zh-CN');vi.clearAllMocks();state.leases=0;state.sockets=[];state.release=null;state.signal=null;
   state.session={id:'lesson',title:'平均数01',title_version:0,task_id:'mean',content_version:'course-dialogue-v1',dialogue_version:'course-dialogue-v1',version:0,
-    status:'active',support_mode:'on',consent:{support:true,camera:true},created_at:1,updated_at:1,node_index:0,total_steps:3,
+    status:'active',milestone_reached:false,support_mode:'on',consent:{support:true,camera:true},created_at:1,updated_at:1,node_index:0,total_steps:3,
     messages:[{id:'opening',role:'assistant',text:'测试课程中的已存在问题',code:'',source:'ai',node_id:'q',created_at:1}],records:[],
     current_node:{id:'q',title:'按人数加权',kind:'question',prompt:'',code:''},episode:null,pending:false,hint_level:0,ready:false,exposed:false,protected:false};
   Object.defineProperty(document,'hidden',{configurable:true,value:false});
@@ -87,4 +87,15 @@ it('keeps the actual answer UI, draft and media alive while the vision socket re
   expect(await screen.findByText('测试 Provider 的回复')).toBeTruthy();
   expect((input as HTMLTextAreaElement).value).toBe('还没发送的新草稿');
   expect(getUserMedia).toHaveBeenCalledTimes(1);
+});
+
+it('shows the milestone summary without restarting learning resources',async()=>{
+  state.session={...state.session,status:'ended',milestone_reached:true,support_mode:'off',consent:{support:true,camera:false},ready:false};
+  render(<Home/>);
+  fireEvent.click(await screen.findByRole('button',{name:'打开学习记录：平均数01'}));
+  expect(await screen.findByText(zhCN.summary.milestoneTitle)).toBeTruthy();
+  expect(screen.getByText('你已完成平均数01的全部学习目标，这段学习记录已保存在历史中。')).toBeTruthy();
+  expect(screen.getByText(zhCN.summary.caveat)).toBeTruthy();
+  expect(screen.queryByRole('textbox',{name:zhCN.composer.label})).toBeNull();
+  expect(screen.queryByText(zhCN.summary.eyebrow)).toBeNull();
 });

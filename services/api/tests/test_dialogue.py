@@ -191,6 +191,77 @@ async def test_correct_feedback_can_transition_without_continue_button():
     assert s['records'][0]['status']=='completed_independently'
 
 
+def test_final_objective_reaches_milestone_and_ends_without_a_new_exercise():
+    from study.contracts import DialogueReply
+    s=new_session('variable',Consent(support=True,camera=True));s['focus_id']='swap'
+    s['records']=[{'node_id':'copy','exercise_id':'q1','status':'completed_independently','hints':0},
+        {'node_id':'overwrite','exercise_id':'q2','status':'completed_with_hint','hints':1}]
+    s['exercise']={'id':'q3','prompt':'交换前怎样保留旧值？','reference':'覆盖前暂存','rubric':'说明覆盖前暂存'}
+    reply=DialogueReply(reply='三个目标都已有正确解答，本课到这里完成。',focus_id='copy',move='practice',exercise_action='replace',
+        exercise={'prompt':'不应出现的额外练习','reference':'不应使用','rubric':'不应使用'})
+    commit_dialogue(s,assessment('覆盖前暂存旧值'),reply,{},'message','覆盖前暂存旧值')
+    assert s['status']=='ended' and s['milestone_reached']
+    assert s['focus_id']=='swap' and s['exercise'] is None and not s['ready']
+    assert s['support_mode']=='off' and not s['consent']['camera'] and not s['protected']
+    assert s['records'][-1]['status']=='completed_independently'
+    public=public_session(s)
+    assert public['milestone_reached'] and public['messages'][-1]['text']==reply.reply
+    assert '不应出现的额外练习' not in json.dumps(public,ensure_ascii=False)
+
+
+@pytest.mark.parametrize('status',['skipped','reviewed_after_example'])
+def test_skipped_or_example_review_does_not_count_toward_milestone(status):
+    from study.contracts import DialogueReply
+    s=session();s['focus_id']='swap'
+    s['records']=[{'node_id':'copy','exercise_id':'q1','status':'completed_independently','hints':0},
+        {'node_id':'overwrite','exercise_id':'q2','status':status,'hints':0}]
+    reply=DialogueReply(reply='继续当前讨论。',focus_id='swap',move='reflect',exercise_action='keep')
+    commit_dialogue(s,assessment('覆盖前暂存旧值'),reply,{},'message','覆盖前暂存旧值')
+    assert s['status']=='active' and not s['milestone_reached']
+
+
+def test_repeating_an_exposed_example_does_not_complete_the_final_objective():
+    from study.contracts import DialogueReply
+    s=session();s['focus_id']='swap';s['exposed']=True;s['exercise']['id']='q3'
+    s['records']=[{'node_id':'copy','exercise_id':'q1','status':'completed_independently','hints':0},
+        {'node_id':'overwrite','exercise_id':'q2','status':'completed_independently','hints':0}]
+    reply=DialogueReply(reply='这只是看过示例后的复述。',focus_id='swap',move='reflect',exercise_action='keep')
+    commit_dialogue(s,assessment('覆盖前暂存旧值'),reply,{},'message','覆盖前暂存旧值')
+    assert s['records'][-1]['status']=='reviewed_after_example'
+    assert s['status']=='active' and not s['milestone_reached']
+
+
+def test_api_auto_ends_after_all_objectives_and_rejects_later_turns(tmp_path):
+    from fastapi.testclient import TestClient
+    class CourseFlow(TestProvider):
+        async def complete_json(self,system,payload):
+            self.calls.append((system,payload))
+            if 'exercise' in payload:
+                return {'evaluation':dict(verdict='supported',evidence_quote=payload['student_text'],misconception='',feedback='')}
+            milestone=payload['milestone']
+            if milestone['reached']:
+                return dict(reply='三个目标都已有正确解答，本课到这里完成。',focus_id='copy',move='practice',exercise_action='replace',
+                    exercise=dict(prompt='不应出现的额外练习',reference='不应使用',rubric='不应使用'),assistance='none')
+            focus=next(objective['id'] for objective in payload['course']['objectives'] if objective['id'] not in milestone['completed_objective_ids'])
+            prompt=f'{focus} 的练习：请说明理由。'
+            return dict(reply=prompt,focus_id=focus,move='practice',exercise_action='replace',
+                exercise=dict(prompt=prompt,reference=f'{focus} 的参考答案',rubric='有依据的说明'),assistance='none')
+    provider=CourseFlow()
+    app=create_app(Settings(database_url=f'sqlite:///{tmp_path}/milestone.db',_env_file=None),provider=provider)
+    with TestClient(app,headers={'X-Study-Client':'web-v1'}) as client:
+        client.get('/api/bootstrap');s=create(client,support=True)
+        for text in ['复制后分别更新','覆盖前保存旧值','交换前暂存旧值']:
+            response=client.post(f"/api/sessions/{s['id']}/turns",json={'text':text,'version':s['version'],'request_id':str(uuid.uuid4())})
+            assert response.status_code==200,response.text;s=response.json()
+        assert s['status']=='ended' and s['milestone_reached']
+        assert [record['node_id'] for record in s['records']]==['copy','overwrite','swap']
+        assert s['current_node']['title']=='暂存与迁移' and not s['ready']
+        assert s['support_mode']=='off' and not s['consent']['camera']
+        assert provider.calls[-1][1]['milestone']['reached']
+        later=client.post(f"/api/sessions/{s['id']}/turns",json={'text':'继续','version':s['version'],'request_id':str(uuid.uuid4())})
+        assert later.status_code==409
+
+
 async def test_manual_answer_wins_over_unseen_automatic_generation(tmp_path):
     entered=asyncio.Event()
     class Slow(TestProvider):

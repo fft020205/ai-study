@@ -4,7 +4,7 @@ import time
 import uuid
 from .dialogue import camera_alerts, exercise_from_reply
 from .tasks import current_node
-from .courses import COURSES, DIALOGUE_VERSION, course_for, focus_for
+from .courses import COURSES, DIALOGUE_VERSION, course_for, focus_for, milestone_state
 
 AI_ACTIONS = {'open','hint','answer','continue','skip'}
 ACTION_LABELS = {'hint':'给我一点提示','answer':'请给我完整示范','continue':'继续聊这个课题','skip':'换个例子试试'}
@@ -13,14 +13,15 @@ ACTION_LABELS_EN = {'hint':'Give me a small hint','answer':'Show me a full examp
 
 def ensure_dialogue(s):
     """Non-destructive lazy upgrade: retain legacy messages, records and current exercise."""
-    if s.get('dialogue_version')==DIALOGUE_VERSION: return s
-    n=current_node(s)
-    index=min(2, [0,1,1,1,2,2][min(s.get('node_index',0),5)])
-    s['focus_id']=COURSES[s['task_id']]['objectives'][index]['id']
-    s['exercise']=({'prompt':n['prompt']+('\n'+n['code'] if n['code'] else ''),
-        'reference':n['answer'],'rubric':n['rubric'],'id':s['question_key']} if n['kind']=='question' else None)
-    s['dialogue_version']=DIALOGUE_VERSION
-    s['learner_state']={};s['dialogue_turn']=0;s['pending_event']=None
+    if s.get('dialogue_version')!=DIALOGUE_VERSION:
+        n=current_node(s)
+        index=min(2, [0,1,1,1,2,2][min(s.get('node_index',0),5)])
+        s['focus_id']=COURSES[s['task_id']]['objectives'][index]['id']
+        s['exercise']=({'prompt':n['prompt']+('\n'+n['code'] if n['code'] else ''),
+            'reference':n['answer'],'rubric':n['rubric'],'id':s['question_key']} if n['kind']=='question' else None)
+        s['dialogue_version']=DIALOGUE_VERSION
+        s['learner_state']={};s['dialogue_turn']=0;s['pending_event']=None
+    s.setdefault('milestone_reached',False)
     return s
 
 
@@ -32,7 +33,7 @@ def message(s, role, text, source='ai', code=''):
 def new_session(task_id, consent, language='zh-CN'):
     now=time.time();focus=COURSES[task_id]['objectives'][0]['id']
     return dict(id=str(uuid.uuid4()),task_id=task_id,language=language,content_version=DIALOGUE_VERSION,dialogue_version=DIALOGUE_VERSION,version=0,
-        status='active',support_mode='on' if consent.support else 'off',consent=consent.model_dump(),
+        status='active',milestone_reached=False,support_mode='on' if consent.support else 'off',consent=consent.model_dump(),
         consent_log=[dict(at=now,**consent.model_dump())],created_at=now,updated_at=now,
         node_index=0,focus_id=focus,exercise=None,question_key=str(uuid.uuid4()),
         hint_level=0,exposed=False,ready=False,messages=[],records=[],pending=None,pending_event=None,requests={},
@@ -43,7 +44,7 @@ def new_session(task_id, consent, language='zh-CN'):
 
 def public_session(s):
     s=ensure_dialogue(copy.deepcopy(s));focus=focus_for(s)
-    fields=('id','task_id','content_version','dialogue_version','version','status','support_mode','consent','created_at','updated_at',
+    fields=('id','task_id','content_version','dialogue_version','version','status','milestone_reached','support_mode','consent','created_at','updated_at',
         'messages','records','hint_level','ready','exposed','protected','episode')
     # Displayed invitations are retained until an explicit user action, including legacy ones.
     if s['episode']:
@@ -102,6 +103,10 @@ def apply_control(s, command):
 def commit_dialogue(s, assessment, reply, state, event, text, record_user=True):
     """Only called after version/ownership/cancellation checks have passed."""
     old_focus=s['focus_id'];exercise=s.get('exercise');ev=assessment.evaluation
+    completing=event=='message' and exercise is not None and ev.verdict=='supported' and not s.get('exposed')
+    milestone=milestone_state(course_for(s),s['records'],old_focus if completing else None)
+    if milestone['reached']:
+        reply=reply.model_copy(update={'focus_id':old_focus,'move':'reflect','exercise_action':'clear','exercise':None})
     if event=='message' and record_user: message(s,'user',text,'submitted')
     elif event in ACTION_LABELS:
         labels=ACTION_LABELS_EN if s.get('language')=='en' else ACTION_LABELS
@@ -135,3 +140,6 @@ def commit_dialogue(s, assessment, reply, state, event, text, record_user=True):
     s['pending']=None;s['pending_event']=None
     if event=='message':clear_unshown_episode(s)
     else:s['episode']=None
+    if milestone['reached']:
+        s['milestone_reached']=True;s['status']='ended';s['support_mode']='off';s['consent']['camera']=False
+        s['protected']=False;s['episode']=None

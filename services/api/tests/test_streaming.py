@@ -95,6 +95,36 @@ def test_stream_accepts_once_then_sends_only_reply_and_commits_atomically(tmp_pa
         assert client.post(f"/api/sessions/{s['id']}/turns/stream",json=body|{'text':'不同内容'}).status_code==409
 
 
+def test_streamed_final_objective_ends_session_and_cleans_up_support_and_vision(tmp_path):
+    import hashlib
+    provider=StreamProvider();app=create_app(Settings(database_url=f'sqlite:///{tmp_path}/milestone-stream.db',_env_file=None),provider=provider)
+    with TestClient(app,headers={'X-Study-Client':'web-v1'}) as client:
+        client.get('/api/bootstrap');s=create(client,support=True,opening=False)
+        owner=hashlib.sha256(client.cookies.get('study_identity').encode()).hexdigest()
+        state=app.state.repo.get(owner,s['id']);version=state['version']
+        state['focus_id']='swap'
+        state['records']=[{'node_id':'copy','exercise_id':'q1','status':'completed_independently','hints':0},
+            {'node_id':'overwrite','exercise_id':'q2','status':'completed_with_hint','hints':1}]
+        state['exercise']={'id':'q3','prompt':'交换前怎样保留旧值？','reference':'覆盖前暂存','rubric':'说明覆盖前暂存'}
+        app.state.repo.save(owner,state,version);s['version']=state['version']
+        app.state.policy.windows[s['id']]='test-window';app.state.policy.state_windows[s['id']]='test-state-window'
+        stops=[];original_stop=app.state.vision.stop
+        async def observed_stop(*args,**kwargs):
+            stops.append((args,kwargs));await original_stop(*args,**kwargs)
+        app.state.vision.stop=observed_stop
+        response=client.post(f"/api/sessions/{s['id']}/turns/stream",json={'text':'覆盖前暂存旧值','version':s['version'],'request_id':str(uuid.uuid4())})
+        output=events(response.text);assert output[-1][0]=='complete'
+        final=output[-1][1]['session']
+        assert final['status']=='ended' and final['milestone_reached'] and not final['ready']
+        assert final['current_node']['title']=='暂存与迁移' and final['support_mode']=='off' and not final['consent']['camera']
+        assert final['records'][-1]['node_id']=='swap' and final['messages'][-1]['text']=='真实增量合同测试'
+        assert provider.calls[-1][1]['milestone']['reached']
+        assert s['id'] not in app.state.policy.windows and s['id'] not in app.state.policy.state_windows
+        assert stops==[((owner,s['id']),{'keep_calibration':False})]
+        later=client.post(f"/api/sessions/{s['id']}/turns/stream",json={'text':'继续','version':final['version'],'request_id':str(uuid.uuid4())})
+        assert later.status_code==409
+
+
 def test_failed_reply_can_retry_without_duplicate_user_message(tmp_path):
     class FailOnce(StreamProvider):
         fail=True

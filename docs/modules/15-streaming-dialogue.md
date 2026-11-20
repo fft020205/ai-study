@@ -36,7 +36,7 @@ event允许message/open/hint/answer/continue/skip/correct，correct需要text。
 | accepted | request_id、session、message_id；用户文字已保存在后端，pending=true |
 | status | request_id、phase=thinking；正在内部评估/等待生成 |
 | delta | request_id、text；仅用户可见正文的真实增量 |
-| complete | request_id、session；整轮验证与提交完成，替换临时正文 |
+| complete | request_id、session；整轮验证与提交完成，替换临时正文；若本轮达到课程里程碑，session 已是 ended 且 milestone_reached=true |
 | error | request_id、detail、status；回复失败或取消，不能当成功消息保存 |
 
 每个事件以空行结束；约10秒无事件发送keep-alive注释。前置校验失败仍是普通JSON HTTP错误：未配置503、越权404、版本/正在生成409、格式422、来源403。流开始后失败以error结束。断流但没有complete不是成功，客户端必须提示重试。
@@ -69,7 +69,7 @@ TeachingService.respond(...,visual_snapshot,on_delta)刷新评估前与生成前
 
 SSE生成器与ManagedStreamResponse共同清理：HTTP响应开始迭代才启动模型；连接关闭、ASGI中间件提前结束或控制取消均停止后台任务并清除本轮pending，保留其他新版本。队列有32帧上限，错误/取消时丢弃未发送旧增量。不能只依靠React卸载或按钮disabled来取消模型。
 
-视觉WS与流式对话并行，原有run、校准、有效性和LLM独立判断链路保留。流式显示不会逐帧额外调用LLM，也不改变视觉特征的隐私边界。
+视觉WS与流式对话并行，原有run、校准、有效性和LLM独立判断链路保留。流式显示不会逐帧额外调用LLM，也不改变视觉特征的隐私边界。最后一轮达到课程里程碑时，`finish_generation()` 与普通 `/turns` 共用提交和清理：保存最终真实回复后重置主动支持策略、停止视觉 WS 运行且 `keep_calibration=false`；complete 携带 ended 会话，后续新学习请求返回409。
 
 ## 主动提示条件
 
@@ -86,7 +86,7 @@ SSE生成器与ManagedStreamResponse共同清理：HTTP响应开始迭代才启�
 
 不需要新增密钥、环境变量或依赖安装。运行npm test、npm run build。反向代理需支持SSE、关闭缓冲/缓存及压缩等待，保留text/event-stream；产品返回X-Accel-Buffering:no和Cache-Control:no-store,no-transform。Next rewrite已用于实际本地流式联调；部署环境需分别检查首字节与增量到达时间。
 
-test_streaming.py覆盖实际上游SSE读取、私有字段/推理隔离、Unicode、截断、已接收消息、幂等重试、取消、浏览器断开、最终无效结构不入库与纠正。前端测试覆盖UTF-8/CRLF跨包、无complete报错、请求/会话匹配和乐观消息去重。policy测试覆盖负荷/疲劳、30秒连续等待和所有阻断；test_support_retention.py 与 Conversation.test.tsx 覆盖输入和生成期间的卡片保留、旧期限兼容与明确操作清除。
+test_streaming.py覆盖实际上游SSE读取、私有字段/推理隔离、Unicode、截断、已接收消息、幂等重试、取消、浏览器断开、最终无效结构不入库与纠正；里程碑专项验证 complete 返回 ended、清除主动支持窗口、停止视觉且不保留校准、后续新请求409。前端测试覆盖UTF-8/CRLF跨包、无complete报错、请求/会话匹配和乐观消息去重；page.camera.test.tsx另验证达标结束回顾及输入区不再显示。policy测试覆盖负荷/疲劳、30秒连续等待和所有阻断；test_support_retention.py 与 Conversation.test.tsx 覆盖输入和生成期间的卡片保留、旧期限兼容与明确操作清除。
 
 浏览器联调仅用独立临时数据库和明确标注的测试Provider，不能将其截图当作真实教学质量验证。真实第三方API的SSE格式兼容、延迟、计费与模型语义尚需按实际服务商验收。当前不提供token级断点续传、离线消息队列或多worker部署。
 

@@ -134,6 +134,7 @@ export const en: TranslationShape<typeof zhCN> = {
   },
   summary: {
     eyebrow: 'Learning session ended', title: 'One small step forward today',
+    milestoneTitle: 'Course milestone reached', milestoneStopped: 'You have completed every learning objective in {{title}}. This learning record has been saved to your history.',
     stopped: '{{title}} · Camera and proactive support are off.', practiced: 'What you practiced',
     topics: 'This session focused on “{{title}}”, with the most recent discussion on “{{focus}}”.',
     completed_one: 'Completed {{count}} exercise with response evidence, including {{independent}} completed without solution hints.',

@@ -27,7 +27,9 @@ TeachingService.respond(session, text, event, visual_snapshot=None, on_delta=Non
 
 评估器读取当前私有 exercise、课程范围、近期可见对话和本轮文字。输出 TurnAssessment：evaluation、intent/intent_quote、correction_quote、cognition/valence/pressure、fatigue/cognitive_load自述及逐字证据。没有可评价练习或证据不能给可靠对错结论。
 
-生成器读取课程事实、最近24条且不超过20000字符的完整消息、当前公开问题、核对结果、有效状态和响应策略。普通生成不读取旧题库、未来题、当前参考答案和 rubric。只有用户明确请求完整示范时才投影当前 reference。
+生成器读取课程事实、最近24条且不超过20000字符的完整消息、当前公开问题、核对结果、有效状态、响应策略和服务端计算的 `milestone`。该字段包含课程里程碑说明、已完成目标ID、目标总数及包含本轮有效作答在内的 `reached`。普通生成不读取旧题库、未来题、当前参考答案和 rubric。只有用户明确请求完整示范时才投影当前 reference。
+
+`milestone.reached=false` 时可在课程内自然继续；为 true 时，系统提示要求模型具体认可最后一条证据并简短收尾，不再提问、举证或布置练习。最终提交由 `learning.py` 在权威会话上重新计算并强制清除练习结构，不信任模型自报完成；可见正文仍是真实模型输出，不由服务端替写。
 
 输出 DialogueReply：reply、focus_id、move、exercise_action、exercise、assistance、可选 visual_judgment 和 support_title（最多40字符，可为空）。新 exercise 的参考答案和判据由模型生成并只存服务器；前端与公共导出不含这些字段。参考格式以 contracts.py 的 JSON schema 为准。
 
@@ -45,7 +47,7 @@ TeachingService.respond(session, text, event, visual_snapshot=None, on_delta=Non
 
 换服务商只实现 Provider；改教学和语气读模块12，不修改网络适配。运行 `npm run test:api`：HTTP合同、错误脱敏、WebSocket请求、JSON校验、证据校验、取消与可见投影均有测试替身。
 
-课程语义边界、引文含义、题目正确性和不泄题行为还依赖真实模型。schema/focus_id/引文子串检查不能证明语义正确；正式试用前必须人工评测离题、注入、矛盾自述及错误题目，不承诺绝对约束。
+课程语义边界、引文含义、题目正确性和不泄题行为还依赖真实模型。schema/focus_id/引文子串检查不能证明语义正确；正式试用前必须人工评测离题、注入、矛盾自述及错误题目，不承诺绝对约束。里程碑自动结束、证据排除和生成上下文由测试替身回归覆盖；真实模型是否总能生成自然且不带额外提问的收尾正文尚未验收，但服务端状态与练习清除不依赖其自觉。
 
 ## 当前视觉状态供模型判断
 

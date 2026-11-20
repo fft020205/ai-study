@@ -60,6 +60,8 @@ activity在通过门控时启动后台支持并立即返回；episode.text为空
 
 新增dialogue_version；current_node现在只描述当前焦点和问题ID，不暴露私有exercise。内部模型输出schema见contracts.py，公共请求OpenAPI仍位于docs/api/openapi.json。
 
+公共会话新增 `milestone_reached` 布尔值，旧记录惰性缺省为 false。三个课程目标均有有效完成证据时，最后一轮普通或流式回复仍返回真实 AI 正文，同时会话投影为 `status=ended`、`milestone_reached=true`、无待做练习，主动支持关闭且摄像头授权撤销。API 重置主动支持策略并停止视觉运行，自动结束不保留校准；后续 `/turns` 与 `/turns/stream` 学习请求因非 active 返回409。读取旧会话只补默认字段，不会凭历史记录直接改写状态。
+
 ## 有来源的摄像头状态提醒
 
 public session新增camera_alerts数组，兼容旧会话默认空：kind=fatigue/high_load，source=self_report/correction，evidence_quote为用户原话，captured_at/expires_at为Unix秒。输入接口不接受前端上传判断标签；服务端从当前有效自述状态生成，仅在active且support已开启时投影。完整learner_state仍不公开，暂停、纠正和过期会撤销提醒。

@@ -1,7 +1,7 @@
 """Grounded learner state and bounded dialogue context. No generated wording here."""
 import time
 from .contracts import TurnAssessment, Evaluation
-from .courses import course_for, focus_for, DIALOGUE_VERSION
+from .courses import course_for, focus_for, milestone_state, DIALOGUE_VERSION
 
 STATE_TTL_SECONDS = 300
 STATE_TTL_TURNS = 3
@@ -87,6 +87,8 @@ def response_policy(state, assessment, event):
 def generation_context(s, text, event, assessment, state):
     c=course_for(s);exercise=s.get('exercise')
     policy=response_policy(state,assessment,event)
+    completing=event=='message' and exercise is not None and assessment.evaluation.verdict=='supported' and not s.get('exposed')
+    milestone=milestone_state(c,s['records'],s['focus_id'] if completing else None)
     return {
         'response_language':s.get('language','zh-CN'),
         'dialogue_version':DIALOGUE_VERSION,'course':c,'focus':focus_for(s),
@@ -95,6 +97,7 @@ def generation_context(s, text, event, assessment, state):
         'verified_evaluation':assessment.evaluation.model_dump(),
         'learner_state':state,'response_policy':policy,
         'recent_records':s['records'][-12:],
+        'milestone':milestone,
         'example_reference':exercise['reference'] if exercise and policy['allow_full_example'] and (exercise.get('reference_alignment')!='unverified' or assessment.evaluation.reference_applicable is True) else None,
         'visual_observation':s.get('visual_observation',{'available':False,'valid':False}),
         'modalities':{'text':'submitted_only','visual_behavior':'available' if s.get('visual_observation',{}).get('valid') else 'unavailable','visual_emotion':'unavailable','acoustic_emotion':'unavailable'},

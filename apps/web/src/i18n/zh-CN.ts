@@ -131,6 +131,7 @@ export const zhCN = {
   },
   summary: {
     eyebrow: '本次学习已结束', title: '今天，向前走了一小步',
+    milestoneTitle: '课程里程碑已达成', milestoneStopped: '你已完成{{title}}的全部学习目标，这段学习记录已保存在历史中。',
     stopped: '{{title}} · 摄像头与主动支持已停止。', practiced: '你练习了什么',
     topics: '本次围绕「{{title}}」展开交流，最近讨论「{{focus}}」。',
     completed_one: '完成了 {{count}} 道有作答证据的练习，其中 {{independent}} 道未使用解题提示。',
