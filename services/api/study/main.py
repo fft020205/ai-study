@@ -259,6 +259,7 @@ def create_app(config=settings, repository=None, provider=None):
                 if reply.visual_judgment:vision.record_judgment(request.state.owner,current,context['visual_observation'],reply.visual_judgment)
                 current['episode'].update(text=reply.reply,title=reply.support_title,kind=used['kind'],question_key=current['question_key'],expires_at=None,
                     context_key=support_key(current,used),generated_turn=current.get('dialogue_turn',0),refresh_attempt_at=time.time())
+                if not shown:current['episode']['delivery_version']=started_version+1
                 record_support_generation(current,used)
                 current['pending']=None;current['pending_event']=None;clear_unshown_episode(current)
                 if reply.assistance=='hint':current['hint_level']=min(2,current['hint_level']+1)
@@ -310,7 +311,7 @@ def create_app(config=settings, repository=None, provider=None):
         v=s['version'];s['pending']=body.request_id;s['pending_event']=event;s['pending_base_version']=body.version
         if event=='support': s['auto_base_version']=v
         else: s.pop('auto_base_version',None)
-        if event=='message':clear_unshown_episode(s)
+        if event=='message':clear_unshown_episode(s,body.version)
         elif event!='support':s['episode']=None
         if event not in ('support','correct'): s['protected']=False
         save(request,s,v)

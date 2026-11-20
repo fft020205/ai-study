@@ -64,13 +64,22 @@ export default function Home(){
     const accepted=s.messages.find(m=>m.request_id===requestId)?.id??null;
     setTurn({sessionId:s.id,requestId,text,event,phase:accepted?'thinking':'sending',reply:'',acceptedId:accepted,error:''});
     setBusy(true);setError('');
+    let replyBuffer='',replyTimer:ReturnType<typeof setTimeout>|null=null;
+    const cancelReplyFlush=()=>{if(replyTimer!==null){clearTimeout(replyTimer);replyTimer=null;}};
+    const flushReply=()=>{
+      replyTimer=null;if(g!==generation.current||!replyBuffer)return;
+      const delta=replyBuffer;replyBuffer='';
+      setTurn(old=>old?.requestId===requestId?{...old,phase:'streaming',reply:old.reply+delta}:old);
+    };
     try{
       await readTurnStream(s,text,event,requestId,abort.current.signal,frame=>{
         if(g!==generation.current||active.current?.id!==s.id)return;
         if(frame.event==='accepted'){
           update(frame.data.session!);setTurn(old=>old?.requestId===requestId?{...old,acceptedId:frame.data.message_id??null,phase:'thinking'}:old);
-        }else if(frame.event==='delta')setTurn(old=>old?.requestId===requestId?{...old,phase:'streaming',reply:old.reply+frame.data.text}:old);
-        else if(frame.event==='complete'){update(frame.data.session!);setTurn(null);}
+        }else if(frame.event==='delta'){
+          // Network-sized chunks must not each trigger a full Markdown render.
+          replyBuffer+=frame.data.text;if(replyTimer===null)replyTimer=setTimeout(flushReply,50);
+        }else if(frame.event==='complete'){cancelReplyFlush();replyBuffer='';update(frame.data.session!);setTurn(null);}
       });
     }catch(e){
       if(g!==generation.current||active.current?.id!==s.id)return;
@@ -83,7 +92,8 @@ export default function Home(){
           setTurn(old=>old?.requestId===requestId?{...old,acceptedId:id}:old);
         }
       }catch{/* Keep the visible message and retry action when offline. */}
-    }finally{if(streamLock.current===requestId)streamLock.current=null;if(g===generation.current)setBusy(false);}
+    }finally{cancelReplyFlush();if(streamLock.current===requestId)streamLock.current=null;if(g===generation.current)setBusy(false);
+    }
   },[update]);
   const retryTurn=async()=>{
     if(!turn||turn.phase!=='failed'||busy||needsCalibration)return;

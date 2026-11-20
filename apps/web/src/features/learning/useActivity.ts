@@ -12,7 +12,10 @@ export function useActivity(session:LearningSession|null,draft:string,busy:boole
     const tick=async()=>{
       const f=flags.current;if(!f.session||f.session.status!=='active'||requesting)return;
       requesting=true;
-      try{const next=await api.activity(f.session,{foreground:!document.hidden&&f.enabled,has_draft:!!f.draft,composing:f.composing,busy:f.busy,reading:f.reading||Date.now()-lastActivity.current<5000});if(active&&flags.current.session?.id===next.id&&next.version>=(flags.current.session?.version??0))update.current(next);}catch{/* Telemetry failure cannot interrupt ordinary learning. */}finally{requesting=false;}
+      try{
+        const next=await api.activity(f.session,{foreground:!document.hidden&&f.enabled,has_draft:!!f.draft,composing:f.composing,busy:f.busy,reading:f.reading||Date.now()-lastActivity.current<5000});
+        if(active&&flags.current.session?.id===next.id&&next.version>=(flags.current.session?.version??0))update.current(next);
+      }catch{/* Telemetry failure cannot interrupt ordinary learning. */}finally{requesting=false;}
     };
     const visibility=()=>{mark();void tick();};
     document.addEventListener('visibilitychange',visibility);document.addEventListener('wheel',mark,{passive:true});document.addEventListener('touchmove',mark,{passive:true});

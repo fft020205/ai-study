@@ -89,6 +89,34 @@ it('keeps the actual answer UI, draft and media alive while the vision socket re
   expect(getUserMedia).toHaveBeenCalledTimes(1);
 });
 
+it('flushes streamed deltas once and lets the complete snapshot discard a pending buffer',async()=>{
+  state.session={...state.session,consent:{support:true,camera:false},ready:true};
+  vi.mocked(readTurnStream).mockImplementation(async(session,text,_event,requestId,signal,onFrame)=>{
+    state.signal=signal;
+    state.session={...session,version:1,pending:true,messages:[...session.messages,{id:'answer',request_id:requestId,role:'user',text,code:'',source:'submitted',node_id:'q',created_at:2}]};
+    onFrame({event:'accepted',data:{session:state.session,message_id:'answer',request_id:requestId}});
+    onFrame({event:'delta',data:{text:'流式第一段',request_id:requestId}});
+    onFrame({event:'delta',data:{text:'与第二段',request_id:requestId}});
+    await new Promise<void>(resolve=>{state.release=resolve;});
+    onFrame({event:'delta',data:{text:'不应迟到的片段',request_id:requestId}});
+    state.session={...state.session,version:2,pending:false,messages:[...state.session.messages,{id:'reply',role:'assistant',text:'服务端完整回复',code:'',source:'ai',node_id:'q',created_at:3}]};
+    onFrame({event:'complete',data:{session:state.session,request_id:requestId}});
+  });
+  render(<Home/>);
+  fireEvent.click(await screen.findByRole('button',{name:/打开学习记录/}));
+  const input=await screen.findByRole('textbox',{name:zhCN.composer.label});
+  fireEvent.change(input,{target:{value:'这是我的回答'}});
+  fireEvent.click(screen.getByRole('button',{name:zhCN.composer.send}));
+  expect(await screen.findByText('流式第一段与第二段')).toBeTruthy();
+  fireEvent.change(input,{target:{value:'流式期间的新草稿'}});
+  state.release!();
+  expect(await screen.findByText('服务端完整回复')).toBeTruthy();
+  expect(screen.queryByText('流式第一段与第二段')).toBeNull();
+  await new Promise(resolve=>setTimeout(resolve,80));
+  expect(screen.queryByText('不应迟到的片段')).toBeNull();
+  expect((input as HTMLTextAreaElement).value).toBe('流式期间的新草稿');
+});
+
 it('shows the milestone summary without restarting learning resources',async()=>{
   state.session={...state.session,status:'ended',milestone_reached:true,support_mode:'off',consent:{support:true,camera:false},ready:false};
   render(<Home/>);

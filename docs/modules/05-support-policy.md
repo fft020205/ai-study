@@ -38,6 +38,8 @@ support_context 返回 kind 和 signals。kind 为 difficulty / cognitive_load /
 
 生成成功后 expires_at=null，卡片保留到用户处理。输入、输入法、阅读、后台、普通发送、回复中或回复失败都不删除已显示卡片。刷新页面可恢复，旧数字期限不再自动隐藏。输入不会取消已触发的初次生成或重写，已显示的标题和正文持续保留。
 
+“已显示”以客户端会话水位为准，不能只看服务端是否已有正文。新卡第一次提交正文时，服务端在私有 `episode.delivery_version` 记录 `started_version+1`，即第一张可携带该正文的公共会话版本。普通 `/turns` 与 `/turns/stream` 的发送准备共用 `clear_unshown_episode(s, body.version)`：客户端版本低于该水位时，说明它不可能已经看到这张新卡，发送会清除后台结果，`accepted`/`complete` 不得借发送首次发布；达到或超过水位时按已显示原卡保留。旧会话中没有水位的有正文卡按已显示卡兼容。该字段只存入既有会话 JSON，不进入公共 episode，也不需要数据库迁移。
+
 有效状态变化时，可以在原 episode.id 上更新，不新增可见卡片。刷新沿用前台/无草稿/无生成/授权条件和默认6秒稳定检测，新状态不再等待30秒全局间隔。首次生成和重写均计入本轮的3次额度；CLI微小波动和来源变化不算新状态。后台生成期间保留原文，成功后整体替换标题与正文，不闪烁。
 
 调用前和提交前再次检查本轮额度、状态去重、有效状态与模型实际输入；视觉已变化、自述失效、版本更新或控制取消则丢弃迟到结果。失败/取消不消耗成功生成额度，保留旧卡；同一失败状态重试默认间隔30秒，其他新状态不受该间隔影响。没有备用台词。等待及 general 恢复文字也计入本轮3次；额度用完保留原卡，下一次正常回复后恢复额度。保留旧卡只表示建议仍可参考，不表示旧状态持续存在。
@@ -54,13 +56,13 @@ support_state_key 只按有效状态种类集合去重，不包括视觉分数�
 
 ## API、配置与隐私
 
-`POST /api/sessions/{sid}/activity` 请求合同不变，useActivity 每2秒发送版本和布尔标志，不上传草稿。公开 episode 只含 id、question_key、reason、kind、title、created_at、expires_at、text；title/kind 对旧记录可缺省，title 可为空并使用普通 UI 标题“按你的节奏来”。reason 保留首次触发原因，当前展示类别用 kind。内部 pending_context、context_key、刷新尝试时间及证据不投影到浏览器。
+`POST /api/sessions/{sid}/activity` 请求合同不变，useActivity 每2秒发送版本和布尔标志，不上传草稿。公开 episode 只含 id、question_key、reason、kind、title、created_at、expires_at、text；title/kind 对旧记录可缺省，title 可为空并使用普通 UI 标题“按你的节奏来”。reason 保留首次触发原因，当前展示类别用 kind。内部 pending_context、context_key、delivery_version、刷新尝试时间及证据不投影到浏览器。
 
 当前配置：SUPPORT_MAX_STATES_PER_TURN=3（允许1–3）、SUPPORT_STATE_STABLE_SECONDS=6、SUPPORT_RETRY_SECONDS=30，位于 config.py 与 .env.example。旧 SUPPORT_MAX_EPISODES / SUPPORT_COOLDOWN_SECONDS / SUPPORT_REFRESH_SECONDS 仅保留配置兼容，不再影响触发；不修改用户现有 .env。无新依赖或数据库迁移。每次成功内容仍来自真实模型，不按视觉帧请求；视觉和自述的有效期不因卡片保留而延长。
 
 ## 验证
 
-运行 npm test、npm run build。test_adaptive_support.py 验证混合需求、纠正优先、过期/未知、稳定窗口、同状态不重复、原卡等待→疲劳→负荷→一般支持、输入/暂停/失败保留、视觉迟到结果丢弃、hint 计分和私有字段隔离。test_support_retention.py 保留活动/普通流式消息/旧期限/恢复与明确操作回归；test_dialogue.py 保留后台离开取消及手动抢占测试。Conversation.test.tsx 渲染真实组件检查生成标题、Markdown、删除按钮、busy 和旧期限后保留。
+运行 npm test、npm run build。test_adaptive_support.py 验证混合需求、纠正优先、过期/未知、稳定窗口、同状态不重复、原卡等待→疲劳→负荷→一般支持、输入/暂停/失败保留、视觉迟到结果丢弃、hint 计分和私有字段隔离；其中普通/SSE × 未交付/已交付四组竞态回归分别验证新卡不借发送首次发布、原卡继续保留，以及 delivery_version 不进入公共 episode。test_support_retention.py 保留活动/普通流式消息/旧期限/恢复与明确操作回归；test_dialogue.py 保留后台离开取消及手动抢占测试。Conversation.test.tsx 渲染真实组件检查生成标题、Markdown、删除按钮、busy 和旧期限后保留。
 
 自动化只使用 tests 内 Provider 和临时数据库，不调用用户真实第三方服务或开启摄像头。真实表达多样性、情感体验、建议准确性、视觉效度、延迟与费用需按实际模型人工评估。
 

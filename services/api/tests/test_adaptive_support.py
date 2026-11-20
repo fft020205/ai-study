@@ -2,6 +2,7 @@
 import asyncio
 import hashlib
 import importlib
+import json
 from contextlib import asynccontextmanager
 from types import SimpleNamespace
 import uuid
@@ -98,6 +99,37 @@ async def environment(tmp_path,monkeypatch,provider=None):
             current['learner_state']=claims
             app.state.repo.save(owner,current,current['version'])
         yield SimpleNamespace(app=app,client=client,provider=provider,now=now,owner=owner,sid=sid,read=read,tick=tick,settle=settle,state=state)
+
+
+@pytest.mark.parametrize('stream',[False,True])
+@pytest.mark.parametrize('deliver_support',[False,True])
+async def test_message_only_preserves_support_already_delivered_to_client(tmp_path,monkeypatch,stream,deliver_support):
+    async with environment(tmp_path,monkeypatch) as env:
+        env.provider.hold=True
+        pending=await env.tick()
+        await asyncio.wait_for(env.provider.entered.wait(),1)
+        episode_id=pending['episode']['id']
+        assert pending['episode']['text'] is None
+        env.provider.release.set()
+        for _ in range(100):
+            raw=env.app.state.repo.get(env.owner,env.sid)
+            if not raw['pending'] and raw['episode'].get('text'):break
+            await asyncio.sleep(0)
+        else:raise AssertionError('support did not commit')
+        # A stale browser has only the pending snapshot; a current browser has received the generated card.
+        browser=await env.read() if deliver_support else pending
+        response=await env.client.post(f"/api/sessions/{env.sid}/turns"+('/stream' if stream else ''),
+            json=dict(text='继续回答',version=browser['version'],request_id=str(uuid.uuid4())))
+        assert response.status_code==200,response.text
+        if stream:
+            frames=[json.loads(line[6:]) for line in response.text.splitlines() if line.startswith('data: ')]
+            snapshots=[frames[0]['session'],frames[-1]['session']]
+        else:snapshots=[response.json()]
+        for snapshot in snapshots:
+            assert (snapshot['episode'] or {}).get('id')==(episode_id if deliver_support else None)
+            assert 'delivery_version' not in (snapshot['episode'] or {})
+        after=await env.read()
+        assert (after['episode'] or {}).get('id')==(episode_id if deliver_support else None)
 
 
 async def test_existing_card_adapts_across_states_without_duplicate_cards_or_episodes(tmp_path,monkeypatch):

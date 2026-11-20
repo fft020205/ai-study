@@ -57,10 +57,13 @@ def public_session(s):
         'language':s.get('language','zh-CN'),'camera_alerts':camera_alerts(s),'pending':bool(s['pending']),'title':s.get('custom_title') or course_for(s)['title'],'title_version':s.get('title_version',0),'total_steps':len(course_for(s)['objectives'])}
 
 
-def clear_unshown_episode(s):
-    if s.get('episode'):
-        if not s['episode'].get('text'):s['episode']=None
-        else:s['episode'].pop('pending_context',None)
+def clear_unshown_episode(s,client_version=None):
+    episode=s.get('episode')
+    if episode:
+        delivery_version=episode.get('delivery_version')
+        undelivered=client_version is not None and delivery_version is not None and client_version<delivery_version
+        if not episode.get('text') or undelivered:s['episode']=None
+        else:episode.pop('pending_context',None)
 
 
 def cancel_pending(s):
